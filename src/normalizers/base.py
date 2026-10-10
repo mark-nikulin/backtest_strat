@@ -12,6 +12,7 @@ import pyarrow.dataset as ds
 
 from src.normalizers.schema import EVENT_SCHEMA, SORT_KEYS, TRADE
 from src.storage.parquet import Manifest, PartitionedParquetWriter
+from src.utils.locks import file_lock
 
 DATA_TYPES = ("trades", "orderbook")
 EVENTS = "events"
@@ -211,6 +212,10 @@ class BaseNormalizer(abc.ABC):
         Нормализует все сырые архивы символа (в диапазоне дат, если задан) и собирает
         события за все дни, для которых хватает данных. Ошибка одного шага не останавливает остальные.
         """
+        with file_lock(self.symbol_dir(symbol) / ".lock"):
+            return self._run(symbol, start, end, force, on_progress)
+
+    def _run(self, symbol, start, end, force, on_progress) -> NormalizeReport:
         in_range = lambda d: (start is None or d >= start) and (end is None or d <= end)
 
         files = [

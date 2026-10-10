@@ -1,4 +1,5 @@
 import os
+import uuid
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -35,7 +36,8 @@ async def download_to_file(
     "битый" файл по финальному пути, и проверка идемпотентности остается корректной.
     """
     dest.parent.mkdir(parents=True, exist_ok=True)
-    tmp = dest.with_name(dest.name + ".part")
+    # Уникальное имя: параллельные процессы (cron + Web UI) не пишут в один и тот же .part
+    tmp = dest.with_name(f"{dest.name}.{uuid.uuid4().hex[:8]}.part")
 
     try:
         async with session.get(url, headers={"User-Agent": USER_AGENT}) as resp:
