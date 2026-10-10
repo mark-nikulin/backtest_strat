@@ -17,3 +17,5 @@ requests==2.34.2
 six==1.17.0
 urllib3==2.8.0
 yarl==1.25.1
+pytest==9.1.1
+pytest-asyncio==1.4.0
