@@ -93,3 +93,37 @@ async def test_okx_real_network_download_trades(tmp_path: Path):
     assert res.status == DownloadStatus.DOWNLOADED
     assert res.path.exists()
     assert res.path.stat().st_size > 1_000_000  # реальный zip ~1.8 MB
+
+
+@pytest.mark.asyncio
+async def test_okx_list_symbols_success(mock_server):
+    import json
+    from aiohttp import web
+
+    payload = {
+        "code": "0",
+        "data": [
+            {"instId": "ETH-USDT", "state": "live"},
+            {"instId": "BTC-USDT", "state": "live"},
+            {"instId": "OLD-USDT", "state": "suspend"},
+        ],
+    }
+
+    async def instruments_handler(request: web.Request):
+        assert request.query.get("instType") == "SPOT"
+        return web.json_response(payload)
+
+    mock_server.add_get("/api/v5/public/instruments", instruments_handler)
+
+    fetcher = OkxFetcher()
+    with patch("src.fetchers.okx.REST", mock_server.url_for("/api/v5")):
+        symbols = await fetcher.list_symbols("SPOT")
+
+    assert symbols == ["BTC-USDT", "ETH-USDT"]
+
+
+@pytest.mark.asyncio
+async def test_okx_list_symbols_invalid_type():
+    fetcher = OkxFetcher()
+    with pytest.raises(ValueError, match="inst_type: допустимо"):
+        await fetcher.list_symbols("INVALID_TYPE")

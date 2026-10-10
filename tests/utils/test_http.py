@@ -34,8 +34,7 @@ async def test_download_to_file_success(tmp_path: Path, mock_server):
     assert result == dest
     assert dest.exists()
     assert dest.read_bytes() == content
-    part_file = dest.with_name(dest.name + ".part")
-    assert not part_file.exists()
+    assert list(dest.parent.glob("*.part")) == []
     assert len(progress_calls) > 0
     assert progress_calls[-1] == (len(content), len(content))
 
@@ -51,7 +50,7 @@ async def test_download_to_file_404_raises_not_found(tmp_path: Path, mock_server
             await download_to_file(session, url, dest)
 
     assert not dest.exists()
-    assert not dest.with_name(dest.name + ".part").exists()
+    assert list(dest.parent.glob("*.part")) == []
 
 
 @pytest.mark.asyncio
@@ -66,6 +65,7 @@ async def test_download_to_file_429_raises_retryable_with_retry_after(tmp_path: 
 
     assert exc_info.value.retry_after == 3.5
     assert not dest.exists()
+    assert list(dest.parent.glob("*.part")) == []
 
 
 @pytest.mark.asyncio
@@ -79,6 +79,7 @@ async def test_download_to_file_500_raises_retryable(tmp_path: Path, mock_server
             await download_to_file(session, url, dest)
 
     assert not dest.exists()
+    assert list(dest.parent.glob("*.part")) == []
 
 
 @pytest.mark.asyncio
@@ -104,7 +105,7 @@ async def test_download_to_file_mismatched_content_length(tmp_path: Path, mock_s
 
     # Ни целевой файл, ни .part не должны остаться на диске
     assert not dest.exists()
-    assert not dest.with_name(dest.name + ".part").exists()
+    assert list(dest.parent.glob("*.part")) == []
 
 
 @pytest.mark.asyncio
@@ -118,3 +119,32 @@ async def test_download_to_file_other_http_error(tmp_path: Path, mock_server):
             await download_to_file(session, url, dest)
 
     assert not dest.exists()
+    assert list(dest.parent.glob("*.part")) == []
+
+
+@pytest.mark.asyncio
+async def test_download_to_file_unique_part_names_during_transfer(tmp_path: Path, mock_server):
+    dest = tmp_path / "concurrent_file.zip"
+    content = b"x" * 1024
+    observed_part_names = set()
+
+    def on_progress(written, total):
+        parts = list(dest.parent.glob("concurrent_file.zip.*.part"))
+        for p in parts:
+            observed_part_names.add(p.name)
+
+    mock_server.add_get_bytes("/sample.zip", content, status=200, headers={"Content-Length": str(len(content))})
+    url = mock_server.url_for("/sample.zip")
+
+    async with aiohttp.ClientSession() as session:
+        await download_to_file(session, url, dest, on_progress=on_progress)
+
+    assert len(observed_part_names) == 1
+    # Check that part name matched pattern: <name>.<8 hex>.part
+    for name in observed_part_names:
+        assert name.startswith("concurrent_file.zip.")
+        assert name.endswith(".part")
+        hex_part = name.split(".")[-2]
+        assert len(hex_part) == 8
+        int(hex_part, 16)  # valid hex
+    assert list(dest.parent.glob("*.part")) == []

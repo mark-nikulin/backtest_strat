@@ -189,3 +189,61 @@ async def test_on_progress_callback(tmp_path: Path, mock_server):
     assert len(progress_events) == 3
     assert progress_events[-1] == (3, 3)
     assert report.ok
+
+
+@pytest.mark.asyncio
+async def test_on_partial_callback(tmp_path: Path, mock_server):
+    fetcher = DummyFetcher("dummy", base_dir=str(tmp_path), server_base_url=mock_server.url_for("/"))
+    start_d = date(2024, 1, 1)
+    end_d = date(2024, 1, 2)
+
+    partial_calls = []
+
+    def on_partial(frac: float):
+        partial_calls.append(frac)
+
+    for d in [1, 2]:
+        path = f"/trades/BTC-USDT/2024-01-0{d}.zip"
+        mock_server.add_get_bytes(path, b"x" * 200, status=200, headers={"Content-Length": "200"})
+
+    report = await fetcher.download_historical_range(
+        "BTC-USDT", start_d, end_d, "trades", max_concurrent=1, on_partial=on_partial
+    )
+
+    assert report.ok
+    assert len(partial_calls) > 0
+    # Every value between 0.0 and 1.0
+    for val in partial_calls:
+        assert 0.0 <= val <= 1.0
+    assert partial_calls[-1] == 1.0
+
+
+@pytest.mark.asyncio
+async def test_cleanup_stale_parts(tmp_path: Path):
+    import os
+    import time
+    fetcher = DummyFetcher("dummy", base_dir=str(tmp_path))
+    target_dir = tmp_path / "dummy" / "BTC-USDT" / "trades"
+    target_dir.mkdir(parents=True, exist_ok=True)
+
+    stale_part = target_dir / "old_download.12345678.part"
+    stale_part.write_bytes(b"old")
+    # Set mtime to 3600 seconds ago (> 30 mins)
+    old_time = time.time() - 3600
+    os.utime(stale_part, (old_time, old_time))
+
+    fresh_part = target_dir / "new_download.87654321.part"
+    fresh_part.write_bytes(b"fresh")
+
+    # Run cleanup
+    fetcher._cleanup_stale_parts("BTC-USDT", "trades")
+
+    assert not stale_part.exists()
+    assert fresh_part.exists()
+
+
+@pytest.mark.asyncio
+async def test_base_fetcher_list_symbols_default():
+    fetcher = DummyFetcher("dummy")
+    symbols = await fetcher.list_symbols("SPOT")
+    assert symbols == []
