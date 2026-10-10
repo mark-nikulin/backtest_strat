@@ -1,0 +1,10 @@
+{
+  "enabled": false,
+  "time": "00:30",
+  "exchange": "okx",
+  "symbols": ["BTC-USDT"],
+  "data_types": ["trades", "orderbook"],
+  "lookback_days": 3,
+  "raw_dir": "data/raw",
+  "processed_dir": "data/processed"
+}

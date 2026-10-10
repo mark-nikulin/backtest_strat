@@ -9,15 +9,17 @@ from datetime import date
 from pathlib import Path
 from typing import List, Literal, Optional
 
-from fastapi import FastAPI, HTTPException, Query
+from fastapi import FastAPI, Header, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from src.api.jobs import JobRunner, JobStore
+from src import scheduler
+from src.utils.logging_setup import read_logs, setup_logging
 from src.fetchers import FETCHERS, get_fetcher
 from src.normalizers import get_normalizer
 from src.pipeline import DATA_TYPES, PipelineParams
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+setup_logging("api")
 logger = logging.getLogger(__name__)
 
 RAW_DIR = os.getenv("PIPELINE_RAW_DIR", "data/raw")
@@ -79,12 +81,18 @@ async def symbols(exchange: str, inst_type: str = Query("SPOT")):
 
 
 @app.post("/jobs", status_code=202)
-def create_job(req: JobRequest):
+def create_job(req: JobRequest, x_client: str = Header("api")):
     params = PipelineParams(**req.model_dump())
     try:
         job_id = app.state.runner.submit(params)
     except ValueError as e:
+        logger.warning(f"Отклонена задача: {e}", extra={"source": x_client})
         raise HTTPException(422, str(e))
+    logger.info(
+        f"Создана задача {job_id}: {params.exchange} {params.symbols} {params.mode} "
+        f"{params.start}..{params.end} {params.data_types} stage={params.stage}",
+        extra={"source": x_client},
+    )
     return app.state.store.get(job_id)
 
 
@@ -112,3 +120,45 @@ def coverage(exchange: str, symbol: str, raw_dir: str = RAW_DIR, processed_dir: 
     events_root = norm.symbol_dir(symbol) / "events"
     events = sorted(p.stem for p in events_root.glob("year=*/month=*/*.parquet")) if events_root.exists() else []
     return {"raw": raw, "events": events}
+
+
+# --- Логи ---
+
+@app.get("/logs")
+def logs(
+    days: int = Query(1, ge=1, le=30),
+    level: List[str] = Query(default=[]),
+    source: Optional[str] = None,
+    q: Optional[str] = None,
+    limit: int = Query(300, ge=1, le=5000),
+):
+    return read_logs(days=days, levels=set(level) or None, source=source or None, query=q, limit=limit)
+
+
+# --- Расписание ---
+
+class ScheduleUpdate(BaseModel):
+    enabled: Optional[bool] = None
+    time: Optional[str] = None
+    symbols: Optional[List[str]] = None
+    data_types: Optional[List[Literal["trades", "orderbook"]]] = None
+    lookback_days: Optional[int] = Field(None, ge=1, le=30)
+
+
+@app.get("/schedule")
+def get_schedule():
+    return scheduler.status()
+
+
+@app.patch("/schedule")
+def update_schedule(upd: ScheduleUpdate, x_client: str = Header("api")):
+    """Меняет только config/schedule.json. Crontab на сервере через API не трогаем намеренно."""
+    cfg = scheduler.load_config()
+    changes = upd.model_dump(exclude_none=True)
+    cfg.update(changes)
+    try:
+        scheduler.save_config(cfg)
+    except ValueError as e:
+        raise HTTPException(422, str(e))
+    logger.info(f"Расписание изменено: {changes}", extra={"source": x_client})
+    return scheduler.status()

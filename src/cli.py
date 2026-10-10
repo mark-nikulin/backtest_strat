@@ -17,6 +17,7 @@ from typing import List, Optional
 from src.fetchers import FETCHERS
 from src.pipeline import DATA_TYPES, MODES, STAGES, PipelineParams, run_pipeline
 from src.utils.dates import parse_date
+from src.utils.logging_setup import setup_logging
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -61,7 +62,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
 
-    logging.basicConfig(level=args.log_level, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
+    setup_logging("cli", level=args.log_level)
+    logging.getLogger(__name__).info(f"CLI: {' '.join(argv if argv is not None else sys.argv[1:])}")
 
     params = PipelineParams(
         exchange=args.exchange,

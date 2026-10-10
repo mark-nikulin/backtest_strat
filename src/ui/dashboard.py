@@ -18,7 +18,7 @@ st.set_page_config(page_title="Data Pipeline", layout="wide")
 
 def api(method: str, path: str, **kwargs):
     try:
-        r = httpx.request(method, f"{API_URL}{path}", timeout=30, **kwargs)
+        r = httpx.request(method, f"{API_URL}{path}", timeout=30, headers={"X-Client": "ui"}, **kwargs)
     except httpx.HTTPError as e:
         st.error(f"API недоступен ({API_URL}): {e}")
         st.stop()
@@ -90,7 +90,7 @@ with st.sidebar:
         except RuntimeError as e:
             st.error(str(e))
 
-tab_jobs, tab_coverage = st.tabs(["Задачи", "Покрытие данных"])
+tab_jobs, tab_coverage, tab_schedule, tab_logs = st.tabs(["Задачи", "Покрытие данных", "Расписание", "Логи"])
 
 
 # --- Задачи: автообновление только этого блока, страница не перерисовывается целиком ---
@@ -134,3 +134,50 @@ with tab_coverage:
             "events": [d in cov["events"] for d in days],
         })
         c2.dataframe(df, hide_index=True, width="stretch")
+
+with tab_schedule:
+    sched = api("GET", "/schedule")
+    cfg = sched["config"]
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Флаг enabled", "вкл" if sched["enabled"] else "выкл")
+    c2.metric("Строка в crontab", "установлена" if sched["cron_installed"] else "нет")
+    c3.metric("Ночной запуск", "будет выполняться" if sched["will_run"] else "не выполняется")
+    if sched.get("cron_error"):
+        st.warning(sched["cron_error"])
+    if not sched["cron_installed"]:
+        st.caption("Строка cron ставится на сервере вручную: `python -m src.scheduler install` "
+                   "(из UI crontab намеренно не меняется).")
+
+    with st.form("schedule"):
+        enabled = st.toggle("Расписание включено", value=cfg["enabled"])
+        f1, f2 = st.columns(2)
+        sched_time = f1.text_input("Время запуска (HH:MM, время сервера)", cfg["time"],
+                                   help="Применяется к crontab только после `python -m src.scheduler install`")
+        lookback = f2.number_input("Перепроверять последних дней", 1, 30, int(cfg["lookback_days"]))
+        sched_symbols = st.text_input("Тикеры (через запятую)", ", ".join(cfg["symbols"]))
+        sched_types = st.multiselect("Данные", meta["data_types"], default=cfg["data_types"])
+        if st.form_submit_button("Сохранить"):
+            try:
+                api("PATCH", "/schedule", json={
+                    "enabled": enabled, "time": sched_time, "lookback_days": int(lookback),
+                    "symbols": [x.strip() for x in sched_symbols.split(",") if x.strip()],
+                    "data_types": sched_types,
+                })
+                st.success("Сохранено")
+                st.rerun()
+            except RuntimeError as e:
+                st.error(str(e))
+
+with tab_logs:
+    f1, f2, f3, f4 = st.columns([2, 1, 1, 1])
+    log_q = f1.text_input("Поиск", placeholder="BTC-USDT, 429, job id...")
+    log_levels = f2.multiselect("Уровень", ["INFO", "WARNING", "ERROR"], default=["WARNING", "ERROR"])
+    log_source = f3.selectbox("Источник", ["", "cli", "cron", "api", "ui"], format_func=lambda x: x or "все")
+    log_days = f4.number_input("Дней", 1, 30, 1)
+    rows = api("GET", "/logs", params={"q": log_q or None, "level": log_levels, "source": log_source or None,
+                                       "days": int(log_days), "limit": 1000})
+    if not rows:
+        st.info("Записей нет")
+    else:
+        df = pd.DataFrame(rows)[["time", "level", "source", "logger", "message"]]
+        st.dataframe(df, hide_index=True, width="stretch", height=500)
