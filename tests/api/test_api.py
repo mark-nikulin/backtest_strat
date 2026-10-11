@@ -179,3 +179,83 @@ def test_api_symbols_invalid_type(api_client):
     resp = client.get("/exchanges/okx/symbols?inst_type=XYZ")
     assert resp.status_code == 422
     assert "inst_type: допустимо" in resp.json()["detail"]
+
+
+def test_api_schedule_endpoints(api_client, monkeypatch):
+    client, _, _ = api_client
+    from src import scheduler
+
+    cfg_data = dict(scheduler.DEFAULTS)
+
+    def fake_load(path=None):
+        return dict(cfg_data)
+
+    def fake_save(cfg, path=None):
+        scheduler._validate_time(cfg["time"])
+        cfg_data.clear()
+        cfg_data.update(cfg)
+
+    monkeypatch.setattr("src.scheduler.load_config", fake_load)
+    monkeypatch.setattr("src.scheduler.save_config", fake_save)
+    monkeypatch.setattr("src.scheduler.status", lambda: {
+        "enabled": cfg_data["enabled"],
+        "cron_installed": True,
+        "cron_line": scheduler.cron_line(cfg_data["time"]),
+        "cron_error": None,
+        "will_run": cfg_data["enabled"],
+        "config": cfg_data,
+    })
+
+    # 1. GET /schedule
+    resp = client.get("/schedule")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "enabled" in data
+    assert "cron_installed" in data
+    assert "config" in data
+
+    # 2. PATCH /schedule valid
+    patch_req = {
+        "enabled": True,
+        "time": "04:15",
+        "lookback_days": 5,
+        "symbols": ["BTC-USDT", "ETH-USDT"],
+    }
+    resp_patch = client.patch("/schedule", json=patch_req, headers={"X-Client": "ui"})
+    assert resp_patch.status_code == 200
+    updated = resp_patch.json()
+    assert updated["config"]["time"] == "04:15"
+    assert updated["config"]["lookback_days"] == 5
+    assert updated["enabled"] is True
+
+    # 3. PATCH /schedule invalid time -> 422
+    resp_bad_time = client.patch("/schedule", json={"time": "invalid_time"})
+    assert resp_bad_time.status_code == 422
+
+    # 4. PATCH /schedule lookback_days out of range (ge=1, le=30) -> 422
+    resp_bad_days = client.patch("/schedule", json={"lookback_days": 50})
+    assert resp_bad_days.status_code == 422
+
+
+def test_api_logs_endpoints(api_client, tmp_path, monkeypatch):
+    client, _, _ = api_client
+    log_dir = tmp_path / "api_logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    today = "2024-01-01"
+    log_file = log_dir / f"pipeline-{today}.log"
+    log_file.write_text(
+        "2024-01-01 12:00:00,000 [INFO] [api] src.api.app: Server startup\n"
+        "2024-01-01 12:01:00,000 [WARNING] [ui] src.api.app: UI warning with keyword\n"
+    )
+
+    with patch("src.api.app.read_logs") as mock_read:
+        mock_read.return_value = [{"level": "WARNING", "source": "ui", "message": "UI warning"}]
+        resp = client.get("/logs?days=1&level=WARNING&source=ui&q=keyword&limit=10")
+        assert resp.status_code == 200
+        assert len(resp.json()) == 1
+        assert mock_read.called
+        kwargs = mock_read.call_args[1]
+        assert kwargs["days"] == 1
+        assert kwargs["levels"] == {"WARNING"}
+        assert kwargs["source"] == "ui"
+        assert kwargs["query"] == "keyword"
