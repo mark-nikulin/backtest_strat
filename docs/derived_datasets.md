@@ -106,6 +106,14 @@ data/processed/<exchange>/<symbol>/
   4. Повышена версия логики `DERIVE_VERSION` в [src/derived/runner.py](file:///Users/kyle/main/py_files/backtest_strat/src/derived/runner.py).
 - Все операции с файлами защищены межпроцессным файловым замком `.derived.lock`.
 
+### Сборка баров только из сделок (`derive_trades`)
+Если L2-события за день отсутствуют, но имеются нормализованные файлы сделок за день $D$ и $D+1$ (покрывающие полные сутки UTC):
+- Модуль [`src/derived/trade_bars.py`](file:///Users/kyle/main/py_files/backtest_strat/src/derived/trade_bars.py) автоматически агрегирует `bars_1s` и `bars_1m` напрямую из сделок.
+- В манифесте фиксируется ключ `derive_trades: <day>`.
+- Слой `l1` не создается, а поля `mid_close` и `spread_close` в барах остаются `null`.
+- Дни с полными L2-событиями всегда имеют приоритет над сделками.
+
+
 ---
 
 ## 6. Примеры чтения данных
@@ -159,21 +167,21 @@ for path in files:
 
 ## 7. Запуск сборки
 
-### Через CLI
+### Через CLI (`src.cli`)
 
 Запуск только сборки производных датасетов:
 ```bash
-python scripts/run_pipeline.py --stage derive --symbols BTC-USDT --start 2024-01-01 --end 2024-01-10
+python -m src.cli --exchange okx --symbol BTC-USDT --stage derive --start 2024-01-01 --end 2024-01-10
 ```
 
 Полный пайплайн (скачивание $\to$ нормализация $\to$ валидация $\to$ производные датасеты):
 ```bash
-python scripts/run_pipeline.py --stage all --symbols BTC-USDT --mode backfill --start 2024-01-01 --end 2024-01-10
+python -m src.cli --exchange okx --symbol BTC-USDT --stage all --mode backfill --start 2024-01-01 --end 2024-01-10
 ```
 
 Принудительная пересборка:
 ```bash
-python scripts/run_pipeline.py --stage derive --symbols BTC-USDT --force
+python -m src.cli --exchange okx --symbol BTC-USDT --stage derive --force
 ```
 
 ### Через Web UI

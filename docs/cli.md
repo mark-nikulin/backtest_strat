@@ -18,7 +18,7 @@ python -m src.cli --exchange <EXCHANGE> --symbol <SYMBOL...> [ОПЦИИ]
 | `--start` | `YYYY-MM-DD` | `None` | Начальная дата диапазона (обязателен для `backfill`). |
 | `--end` | `YYYY-MM-DD` | `None` | Конечная дата (для `backfill` обязателен; для `daily` заменяет вчерашнюю дату UTC). |
 | `--data-type` | `trades`, `orderbook` | оба типа | Типы данных для обработки. |
-| `--stage` | `all`, `ingest`, `normalize` | `all` | Этап пайплайна (`all` = скачать и нормализовать). |
+| `--stage` | `all`, `ingest`, `normalize`, `validate`, `derive` | `all` | Этап пайплайна (`all` = скачать, нормализовать, проверить и собрать производные). |
 | `--raw-dir` | путь к директории | `data/raw` | Каталог сохранения сырых архивов. |
 | `--processed-dir`| путь к директории | `data/processed` | Каталог сохранения Parquet-файлов. |
 | `--concurrency` | целое число $\ge 1$ | `5` | Количество параллельных потоков скачивания в режиме `backfill`. |

@@ -24,6 +24,20 @@
 | `no_events` | Файл событий пуст (0 записей) | Файл не содержит строк | `FAIL` |
 | `validator_error` | Исключение при чтении или парсинге файла | Любая непредвиденная ошибка | `FAIL` |
 
+### Проверки по одним сделкам (Trades-Only Validation)
+
+Для дней, где стакан отсутствует или исследование строится только на сделках (`src/validation/trades.py`), запускается специализированный набор проверок:
+
+| Имя проверки | Описание | Порог по умолчанию | Статус |
+|---|---|---|---|
+| `no_trades` | Наличие сделок за сутки | 0 сделок | `FAIL` |
+| `duplicate_trade_ids` | Уникальность биржевых идентификаторов | Любые дубликаты `trade_id` | `FAIL` |
+| `non_positive` | Корректность цен и объемов сделок | Цена $\le 0$ или объем $\le 0$ | `FAIL` |
+| `trade_gaps` | Паузы в потоке сделок (включая края суток UTC) | Пауза $> 1\,\text{ч}$ $\to$ `WARN`<br>Пауза $> 6\,\text{ч}$ $\to$ `FAIL` | `WARN` / `FAIL` |
+| `trade_price_spike` | Спайк цены за минуту с откатом | Скачок цены $\ge 5\%$ с возвратом $\ge 80\%$ за минуту | `WARN` |
+| `low_coverage` | Доля активных минут со сделками | Доля минут $< 25\%$ | `WARN` |
+
+
 ---
 
 ## 3. Статусы и действия оператора
@@ -144,21 +158,21 @@ class Thresholds:
 
 ## 7. Запуск валидации
 
-### 1. Через CLI (`run_pipeline.py`)
+### 1. Через CLI (`src.cli`)
 
 Только валидация существующих данных:
 ```bash
-python scripts/run_pipeline.py --stage validate --symbols BTC-USDT --start 2024-01-01 --end 2024-01-10
+python -m src.cli --exchange okx --symbol BTC-USDT --stage validate --start 2024-01-01 --end 2024-01-10
 ```
 
-Полный пайплайн (скачивание $\to$ нормализация $\to$ валидация):
+Полный пайплайн (скачивание $\to$ нормализация $\to$ валидация $\to$ производные):
 ```bash
-python scripts/run_pipeline.py --stage all --symbols BTC-USDT --mode backfill --start 2024-01-01 --end 2024-01-10
+python -m src.cli --exchange okx --symbol BTC-USDT --stage all --mode backfill --start 2024-01-01 --end 2024-01-10
 ```
 
 Принудительный пересчет отчетов:
 ```bash
-python scripts/run_pipeline.py --stage validate --symbols BTC-USDT --force
+python -m src.cli --exchange okx --symbol BTC-USDT --stage validate --force
 ```
 
 ### 2. Через Web UI

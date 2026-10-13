@@ -97,6 +97,11 @@ daily_report = await fetcher.download_daily(
     data_type="trades",
     target_date=None,  # по умолчанию yesterday_utc()
 )
+
+# 4. Рыночные метаданные (инструменты, спецификации, спреды)
+symbols = await fetcher.list_symbols(inst_type="SPOT")
+specs = await fetcher.instrument_specs(inst_type="SPOT")      # tick_size, lot_size, min_size
+spreads = await fetcher.spread_snapshot(inst_type="SPOT")    # срез bid-ask спредов в базисных пунктах
 ```
 
 ---
