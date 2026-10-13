@@ -259,3 +259,40 @@ def test_api_logs_endpoints(api_client, tmp_path, monkeypatch):
         assert kwargs["levels"] == {"WARNING"}
         assert kwargs["source"] == "ui"
         assert kwargs["query"] == "keyword"
+
+
+def test_api_validation_endpoint(api_client):
+    import json
+    client, _, processed_dir = api_client
+
+    events_dir = processed_dir / "okx" / "BTC-USDT" / "events" / "year=2024" / "month=01"
+    events_dir.mkdir(parents=True, exist_ok=True)
+    (events_dir / "2024-01-01.parquet").write_bytes(b"dummy")
+    (events_dir / "2024-01-03.parquet").write_bytes(b"dummy")
+
+    val_dir = processed_dir / "okx" / "BTC-USDT" / "validation"
+    val_dir.mkdir(parents=True, exist_ok=True)
+    report_data = {
+        "fingerprint": {"name": "2024-01-01.parquet", "size": 5, "version": 1},
+        "report": {
+            "day": "2024-01-01",
+            "status": "OK",
+            "events": 100,
+            "book_messages": 50,
+            "trades": 50,
+            "snapshots": 1,
+            "first_ts": "2024-01-01T00:00:00.000Z",
+            "last_ts": "2024-01-01T23:59:59.000Z",
+            "checks": [],
+            "stats": {},
+        },
+    }
+    (val_dir / "2024-01-01.json").write_text(json.dumps(report_data))
+
+    resp = client.get(f"/validation/okx/BTC-USDT?processed_dir={processed_dir}")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert len(data["days"]) == 1
+    assert data["days"][0]["day"] == "2024-01-01"
+    assert data["missing_days"] == ["2024-01-02"]
+    assert data["not_validated"] == ["2024-01-03"]

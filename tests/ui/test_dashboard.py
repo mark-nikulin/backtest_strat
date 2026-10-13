@@ -68,6 +68,28 @@ def _mock_httpx_request(method: str, url: str, **kwargs):
                 "message": "Sample log line",
             }
         ]
+    elif "/validation" in url:
+        resp.json.return_value = {
+            "days": [
+                {
+                    "day": "2024-01-01",
+                    "status": "WARN",
+                    "events": 1000,
+                    "snapshots": 10,
+                    "checks": [
+                        {
+                            "name": "book_gap",
+                            "status": "WARN",
+                            "detail": "Макс. пауза 35s",
+                            "value": 35.0,
+                            "examples": ["12:00:00 -> 12:00:35"],
+                        }
+                    ],
+                }
+            ],
+            "missing_days": ["2024-01-02"],
+            "not_validated": ["2024-01-03"],
+        }
     else:
         resp.json.return_value = {}
 

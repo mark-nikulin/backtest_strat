@@ -106,3 +106,42 @@ def test_engine_message_split_across_batches_and_lifecycle():
     assert len(engine.portfolio.equity_curve) > 0
     assert result.events == 4
     assert result.trades == 2
+
+
+def test_engine_starts_only_after_first_snapshot_when_day_starts_with_updates():
+    spec = InstrumentSpec(symbol="BTC-USDT", tick_size=0.1, lot_size=0.01)
+    strat = TrackingStrategy()
+    engine = BacktestEngine(strat, spec)
+
+    # 1. День начинается с BOOK_UPDATE (не snapshot)
+    batch_update = make_record_batch([
+        {"ts": 1_000_000_000, "event_type": BOOK_UPDATE, "side": BUY, "price": 100.0, "size": 1.0, "msg_id": 1, "level": 0},
+        {"ts": 1_000_000_000, "event_type": BOOK_UPDATE, "side": SELL, "price": 101.0, "size": 1.0, "msg_id": 1, "level": 0},
+    ])
+
+    # 2. Сделка до первого снапшота
+    batch_trade_before_snap = make_record_batch([
+        {"ts": 1_500_000_000, "event_type": TRADE, "side": BUY, "price": 100.5, "size": 0.5, "msg_id": 2},
+    ])
+
+    # 3. Первый снапшот
+    batch_snapshot = make_record_batch([
+        {"ts": 2_000_000_000, "event_type": BOOK_SNAPSHOT, "side": BUY, "price": 100.0, "size": 2.0, "msg_id": 3, "level": 0},
+        {"ts": 2_000_000_000, "event_type": BOOK_SNAPSHOT, "side": SELL, "price": 101.0, "size": 2.0, "msg_id": 3, "level": 0},
+    ])
+
+    # 4. Сделка после снапшота
+    batch_trade_after_snap = make_record_batch([
+        {"ts": 2_500_000_000, "event_type": TRADE, "side": SELL, "price": 100.5, "size": 0.5, "msg_id": 4},
+    ])
+
+    batches = [batch_update, batch_trade_before_snap, batch_snapshot, batch_trade_after_snap]
+    result = engine.run_batches(batches)
+
+    # Стратегия стартовала и завершилась
+    assert strat.started is True
+    assert strat.ended is True
+
+    # Сделка до снапшота была проигнорирована, обработана только сделка после снапшота
+    assert strat.trade_calls == 1
+    assert result.trades == 2
