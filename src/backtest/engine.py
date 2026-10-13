@@ -59,6 +59,7 @@ class BacktestEngine:
         self._equity_sample_ns = equity_sample_ns
         self._next_sample: Optional[int] = None
         self._started = False
+        self._seen_snapshot = False  # архив дня может начинаться с апдейтов: до снапшота книга неполна
 
     # --- вызывается из Context / книги ---
 
@@ -117,7 +118,9 @@ class BacktestEngine:
             book_msgs += 1
             msg_id = None
             m_sides.clear(); m_prices.clear(); m_sizes.clear()
-            if not self._started and book.is_valid():
+            if msg_snapshot:
+                self._seen_snapshot = True
+            if not self._started and self._seen_snapshot and book.is_valid():
                 self._started = True
                 strategy.on_start(ctx)
             if self._started:

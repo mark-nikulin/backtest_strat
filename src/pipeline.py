@@ -11,11 +11,12 @@ from typing import Callable, List, Optional, Sequence
 from src.fetchers import BackfillReport, get_fetcher
 from src.normalizers import NormalizeReport, get_normalizer
 from src.utils.dates import yesterday_utc
+from src.validation import ValidationSummary, validate_symbol
 
 logger = logging.getLogger(__name__)
 
 MODES = ("backfill", "daily")
-STAGES = ("all", "ingest", "normalize")
+STAGES = ("all", "ingest", "normalize", "validate")
 DATA_TYPES = ("trades", "orderbook")
 
 # (доля 0..1, текстовый статус)
@@ -65,13 +66,18 @@ class PipelineParams:
 class PipelineResult:
     ingest: List[BackfillReport] = field(default_factory=list)
     normalize: List[NormalizeReport] = field(default_factory=list)
+    validate: List[ValidationSummary] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
-        return all(r.ok for r in self.ingest) and all(r.ok for r in self.normalize)
+        return all(r.ok for r in self.ingest) and all(r.ok for r in self.normalize) and all(r.ok for r in self.validate)
 
     def summary_lines(self) -> List[str]:
-        return [f"ingest    {r.summary()}" for r in self.ingest] + [f"normalize {r.summary()}" for r in self.normalize]
+        return (
+            [f"ingest    {r.summary()}" for r in self.ingest]
+            + [f"normalize {r.summary()}" for r in self.normalize]
+            + [f"validate  {r.summary()}" for r in self.validate]
+        )
 
     def to_dict(self) -> dict:
         def failed(rs, attr_status, key):
@@ -82,7 +88,12 @@ class PipelineResult:
         return {
             "ok": self.ok,
             "summary": self.summary_lines(),
-            "failed": failed(self.ingest, "failed", "target_date") + failed(self.normalize, "failed", "name"),
+            "failed": failed(self.ingest, "failed", "target_date") + failed(self.normalize, "failed", "name")
+            + [
+                {"day": d["day"], "error": "; ".join(c["detail"] for c in d["checks"] if c["status"] == "FAIL")}
+                for r in self.validate for d in r.days if d["status"] == "FAIL"
+            ]
+            + [{"day": m, "error": "нет событий за день внутри собранного диапазона"} for r in self.validate for m in r.missing_days],
         }
 
 
@@ -93,8 +104,9 @@ async def run_pipeline_async(params: PipelineParams, on_progress: Optional[Progr
 
     do_ingest = params.stage in ("all", "ingest")
     do_normalize = params.stage in ("all", "normalize")
+    do_validate = params.stage in ("all", "validate")
     # Веса этапов для общего прогресс-бара
-    units: List[str] = (["ingest"] * len(params.data_types) if do_ingest else []) + (["normalize"] if do_normalize else [])
+    units: List[str] = (["ingest"] * len(params.data_types) if do_ingest else []) + (["normalize"] if do_normalize else []) + (["validate"] if do_validate else [])
     total_units = len(units) * len(params.symbols)
     done_units = 0
 
@@ -122,6 +134,15 @@ async def run_pipeline_async(params: PipelineParams, on_progress: Optional[Progr
                 normalizer.run, symbol, norm_start, end, params.force, cb
             )
             result.normalize.append(rep)
+            done_units += 1
+
+        if do_validate:
+            val_start = start if params.mode == "backfill" else None
+            cb = lambda i, n, s=symbol: report(i / max(n, 1), f"{s} проверка данных: {i}/{n} дн.")
+            summary = await asyncio.to_thread(
+                validate_symbol, symbol, params.exchange, params.processed_dir, val_start, end, False, on_progress=cb
+            )
+            result.validate.append(summary)
             done_units += 1
 
     report(0, "Готово")

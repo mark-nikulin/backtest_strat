@@ -69,8 +69,8 @@ with st.sidebar:
         st.caption("Скачает последний полный день (UTC)")
 
     stage = st.selectbox("Этапы", ["all", "ingest", "normalize"],
-                         format_func={"all": "Скачать + нормализовать", "ingest": "Только скачать",
-                                      "normalize": "Только нормализовать"}.get)
+                         format_func={"all": "Скачать + нормализовать + проверить", "ingest": "Только скачать",
+                                      "normalize": "Только нормализовать", "validate": "Только проверить"}.get)
     with st.expander("Дополнительно"):
         raw_dir = st.text_input("Папка сырых данных", meta["raw_dir"])
         processed_dir = st.text_input("Папка обработанных данных", meta["processed_dir"])
@@ -90,7 +90,8 @@ with st.sidebar:
         except RuntimeError as e:
             st.error(str(e))
 
-tab_jobs, tab_coverage, tab_schedule, tab_logs = st.tabs(["Задачи", "Покрытие данных", "Расписание", "Логи"])
+tab_jobs, tab_coverage, tab_quality, tab_schedule, tab_logs = st.tabs(
+    ["Задачи", "Покрытие данных", "Качество данных", "Расписание", "Логи"])
 
 
 # --- Задачи: автообновление только этого блока, страница не перерисовывается целиком ---
@@ -134,6 +135,34 @@ with tab_coverage:
             "events": [d in cov["events"] for d in days],
         })
         c2.dataframe(df, hide_index=True, width="stretch")
+
+with tab_quality:
+    q_symbol = st.text_input("Тикер", symbols[0] if symbols else "BTC-USDT", key="q_symbol")
+    val = api("GET", f"/validation/{exchange}/{q_symbol}")
+    icon = {"OK": "🟢", "WARN": "🟡", "FAIL": "🔴"}
+    if not val["days"] and not val["not_validated"]:
+        st.info("Данных нет. Запустите задачу со стадией «Только проверить» или «Скачать + нормализовать + проверить».")
+    else:
+        counts = {s: sum(1 for d in val["days"] if d["status"] == s) for s in ("OK", "WARN", "FAIL")}
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("🟢 OK", counts["OK"])
+        m2.metric("🟡 WARN", counts["WARN"])
+        m3.metric("🔴 FAIL", counts["FAIL"])
+        m4.metric("Пропущено дней", len(val["missing_days"]))
+        if val["missing_days"]:
+            st.error("Нет событий за дни внутри собранного диапазона: " + ", ".join(val["missing_days"]))
+        if val["not_validated"]:
+            st.warning("Не проверены: " + ", ".join(val["not_validated"]))
+        for d in reversed(val["days"]):
+            with st.expander(f"{icon[d['status']]} {d['day']} · {d['events']:,} событий · {d['snapshots']} снапшотов",
+                             expanded=d["status"] != "OK"):
+                st.dataframe(
+                    pd.DataFrame([{"": icon[c["status"]], "проверка": c["name"], "результат": c["detail"]} for c in d["checks"]]),
+                    hide_index=True, width="stretch")
+                for c in d["checks"]:
+                    if c["examples"]:
+                        st.caption(f"Примеры — {c['name']}")
+                        st.code("\n".join(c["examples"]))
 
 with tab_schedule:
     sched = api("GET", "/schedule")

@@ -18,6 +18,8 @@ from src.utils.logging_setup import read_logs, setup_logging
 from src.fetchers import FETCHERS, get_fetcher
 from src.normalizers import get_normalizer
 from src.pipeline import DATA_TYPES, PipelineParams
+from src.validation import load_reports
+from src.validation.runner import events_files
 
 setup_logging("api")
 logger = logging.getLogger(__name__)
@@ -34,7 +36,7 @@ class JobRequest(BaseModel):
     start: Optional[date] = None
     end: Optional[date] = None
     data_types: List[Literal["trades", "orderbook"]] = Field(default_factory=lambda: list(DATA_TYPES))
-    stage: Literal["all", "ingest", "normalize"] = "all"
+    stage: Literal["all", "ingest", "normalize", "validate"] = "all"
     raw_dir: str = RAW_DIR
     processed_dir: str = PROCESSED_DIR
     max_concurrent: int = Field(5, ge=1, le=32)
@@ -162,3 +164,26 @@ def update_schedule(upd: ScheduleUpdate, x_client: str = Header("api")):
         raise HTTPException(422, str(e))
     logger.info(f"Расписание изменено: {changes}", extra={"source": x_client})
     return scheduler.status()
+
+
+# --- Качество данных ---
+
+@app.get("/validation/{exchange}/{symbol}")
+def validation(exchange: str, symbol: str, processed_dir: str = PROCESSED_DIR):
+    """Сохраненные отчеты проверок по дням + дни внутри диапазона без событий. Пересчет — через задачу stage=validate."""
+    from datetime import timedelta
+    reports = load_reports(exchange, symbol, processed_dir)
+    files = events_files(processed_dir, exchange, symbol)
+    missing = []
+    if len(files) >= 2:
+        d, hi = min(files), max(files)
+        while d <= hi:
+            if d not in files:
+                missing.append(d.isoformat())
+            d += timedelta(days=1)
+    validated = {r["day"] for r in reports}
+    return {
+        "days": reports,
+        "missing_days": missing,
+        "not_validated": sorted(d.isoformat() for d in files if d.isoformat() not in validated),
+    }
