@@ -14,6 +14,26 @@ def pytest_configure(config):
     )
 
 
+@pytest.fixture(autouse=True)
+def isolate_logging(tmp_path, monkeypatch):
+    """Изолирует запись логов тестов во временную директорию (ISSUE-P6)."""
+    import logging
+    import src.utils.logging_setup as ls
+
+    log_dir = tmp_path / "test_logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("PIPELINE_LOG_DIR", str(log_dir))
+    monkeypatch.setattr(ls, "LOG_DIR", log_dir)
+
+    for h in logging.getLogger().handlers:
+        if isinstance(h, ls.DailyFileHandler):
+            monkeypatch.setattr(h, "log_dir", log_dir)
+            if h._stream:
+                h._stream.close()
+                h._stream = None
+            h._day = None
+
+
 class MockHttpServer:
     """Динамический локальный HTTP-сервер на aiohttp.web."""
 

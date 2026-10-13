@@ -127,3 +127,97 @@ async def test_okx_list_symbols_invalid_type():
     fetcher = OkxFetcher()
     with pytest.raises(ValueError, match="inst_type: допустимо"):
         await fetcher.list_symbols("INVALID_TYPE")
+
+
+@pytest.mark.asyncio
+async def test_okx_instrument_specs(mock_server):
+    from aiohttp import web
+
+    payload = {
+        "code": "0",
+        "data": [
+            {
+                "instId": "BTC-USDT",
+                "state": "live",
+                "tickSz": "0.1",
+                "lotSz": "0.01",
+                "minSz": "0.05",
+                "ctVal": "2.0",
+                "ctMult": "0.5",
+            },
+            {
+                "instId": "ETH-USDT",
+                "state": "live",
+                "tickSz": "0.01",
+                "lotSz": "0.1",
+            },
+            {
+                "instId": "DEAD-USDT",
+                "state": "suspend",
+                "tickSz": "1.0",
+                "lotSz": "1.0",
+            },
+        ],
+    }
+
+    async def instruments_handler(request: web.Request):
+        return web.json_response(payload)
+
+    mock_server.add_get("/api/v5/public/instruments", instruments_handler)
+
+    fetcher = OkxFetcher()
+    with patch("src.fetchers.okx.REST", mock_server.url_for("/api/v5")):
+        specs = await fetcher.instrument_specs("SPOT")
+
+    assert set(specs.keys()) == {"BTC-USDT", "ETH-USDT"}
+    assert specs["BTC-USDT"] == {
+        "tick_size": 0.1,
+        "lot_size": 0.01,
+        "min_size": 0.05,
+        "multiplier": 1.0,
+    }
+    assert specs["ETH-USDT"] == {
+        "tick_size": 0.01,
+        "lot_size": 0.1,
+        "min_size": 0.1,
+        "multiplier": 1.0,
+    }
+
+
+@pytest.mark.asyncio
+async def test_okx_spread_snapshot(mock_server):
+    from aiohttp import web
+
+    payload = {
+        "code": "0",
+        "data": [
+            # 1. Valid ticker
+            {"instId": "BTC-USDT", "bidPx": "100.0", "askPx": "100.1"},
+            # 2. Missing bidPx
+            {"instId": "ETH-USDT", "askPx": "2000.0"},
+            # 3. Empty string
+            {"instId": "SOL-USDT", "bidPx": "", "askPx": "100.0"},
+            # 4. Bid <= 0
+            {"instId": "ZERO-USDT", "bidPx": "0.0", "askPx": "10.0"},
+            # 5. Crossed (ask < bid)
+            {"instId": "CROSS-USDT", "bidPx": "100.0", "askPx": "99.0"},
+        ],
+    }
+
+    async def tickers_handler(request: web.Request):
+        assert request.query.get("instType") == "SPOT"
+        return web.json_response(payload)
+
+    mock_server.add_get("/api/v5/market/tickers", tickers_handler)
+
+    fetcher = OkxFetcher()
+    with patch("src.fetchers.okx.REST", mock_server.url_for("/api/v5")):
+        spreads = await fetcher.spread_snapshot("SPOT")
+
+    assert list(spreads.keys()) == ["BTC-USDT"]
+    expected_bps = (0.1 / 100.05) * 1e4
+    assert spreads["BTC-USDT"] == pytest.approx(expected_bps)
+
+    # Invalid inst_type raises ValueError
+    with pytest.raises(ValueError, match="inst_type: допустимо"):
+        await fetcher.spread_snapshot("INVALID_TYPE")
