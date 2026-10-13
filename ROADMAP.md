@@ -23,10 +23,12 @@
 - [ ] Пороги проверок по инструментам (SWAP/альты ведут себя иначе, чем BTC-USDT спот)
 
 ## 2. Производные датасеты (крон)
-- [ ] L1 / top-of-book: best bid/ask + объемы на каждое изменение
-- [ ] Бары 1s / 1m: OHLCV, VWAP, buy/sell imbalance
+- [x] L1 / top-of-book: best bid/ask + объемы на каждое изменение (`src/derived/`, 24.4M событий → 738k строк за день)
+- [x] Бары 1s / 1m: OHLCV, VWAP, buy/sell volume, imbalance, trades, mid_close/spread_close (as-of L1)
+- [x] Стадия `derive` в пайплайне/CLI/API/кроне, идемпотентность по отпечатку events + версии логики, `load_derived()`
 - [ ] Срезы L10 каждые N мс
 - [ ] (опц.) ClickHouse для L1 и баров
+- [ ] L1/бары: переносить состояние книги между днями (сейчас день начинается с первого снапшота дня)
 
 ## 3. Движок бэктеста (одна библиотека на все альфы) — `src/backtest/`
 - [x] Интерфейс стратегии: `on_start`, `on_book`, `on_trade`, `on_fill`, `on_timer`, `on_end`

@@ -25,6 +25,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from src.normalizers.schema import BOOK_SNAPSHOT, BUY, SELL, TRADE
+from src.utils.simple_book import SimpleBook as _Book
 
 NS = 1_000_000_000
 COLUMNS = ["ts", "event_type", "side", "price", "size", "msg_id"]
@@ -74,42 +75,6 @@ class DayReport:
 
 def _iso(ns: int) -> str:
     return datetime.fromtimestamp(ns / NS, tz=timezone.utc).isoformat(timespec="milliseconds")
-
-
-class _Book:
-    __slots__ = ("bids", "asks", "bb", "ba")
-
-    def __init__(self) -> None:
-        self.bids: Dict[float, float] = {}
-        self.asks: Dict[float, float] = {}
-        self.bb: Optional[float] = None
-        self.ba: Optional[float] = None
-
-    def reset(self) -> None:
-        self.bids.clear()
-        self.asks.clear()
-        self.bb = self.ba = None
-
-    def set(self, side: int, price: float, size: float) -> None:
-        book = self.bids if side == BUY else self.asks
-        if size <= 0:
-            book.pop(price, None)
-        else:
-            book[price] = size
-            if side == BUY:
-                if self.bb is None or price > self.bb:
-                    self.bb = price
-            elif self.ba is None or price < self.ba:
-                self.ba = price
-
-    def finalize(self) -> None:
-        if self.bb not in self.bids:
-            self.bb = max(self.bids, default=None)
-        if self.ba not in self.asks:
-            self.ba = min(self.asks, default=None)
-
-    def valid(self) -> bool:
-        return self.bb is not None and self.ba is not None
 
 
 def validate_events_file(path: Path, th: Thresholds = Thresholds()) -> DayReport:

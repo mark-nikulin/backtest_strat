@@ -69,8 +69,9 @@ with st.sidebar:
         st.caption("Скачает последний полный день (UTC)")
 
     stage = st.selectbox("Этапы", ["all", "ingest", "normalize"],
-                         format_func={"all": "Скачать + нормализовать + проверить", "ingest": "Только скачать",
-                                      "normalize": "Только нормализовать", "validate": "Только проверить"}.get)
+                         format_func={"all": "Весь цикл (скачать → нормализовать → проверить → производные)", "ingest": "Только скачать",
+                                      "normalize": "Только нормализовать", "validate": "Только проверить",
+                                      "derive": "Только производные датасеты"}.get)
     with st.expander("Дополнительно"):
         raw_dir = st.text_input("Папка сырых данных", meta["raw_dir"])
         processed_dir = st.text_input("Папка обработанных данных", meta["processed_dir"])

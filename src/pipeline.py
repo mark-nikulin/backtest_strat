@@ -8,6 +8,7 @@ from dataclasses import asdict, dataclass, field
 from datetime import date
 from typing import Callable, List, Optional, Sequence
 
+from src.derived import DeriveReport, derive_symbol
 from src.fetchers import BackfillReport, get_fetcher
 from src.normalizers import NormalizeReport, get_normalizer
 from src.utils.dates import yesterday_utc
@@ -16,7 +17,7 @@ from src.validation import ValidationSummary, validate_symbol
 logger = logging.getLogger(__name__)
 
 MODES = ("backfill", "daily")
-STAGES = ("all", "ingest", "normalize", "validate")
+STAGES = ("all", "ingest", "normalize", "validate", "derive")
 DATA_TYPES = ("trades", "orderbook")
 
 # (доля 0..1, текстовый статус)
@@ -67,16 +68,23 @@ class PipelineResult:
     ingest: List[BackfillReport] = field(default_factory=list)
     normalize: List[NormalizeReport] = field(default_factory=list)
     validate: List[ValidationSummary] = field(default_factory=list)
+    derive: List[DeriveReport] = field(default_factory=list)
 
     @property
     def ok(self) -> bool:
-        return all(r.ok for r in self.ingest) and all(r.ok for r in self.normalize) and all(r.ok for r in self.validate)
+        return (
+            all(r.ok for r in self.ingest)
+            and all(r.ok for r in self.normalize)
+            and all(r.ok for r in self.validate)
+            and all(r.ok for r in self.derive)
+        )
 
     def summary_lines(self) -> List[str]:
         return (
             [f"ingest    {r.summary()}" for r in self.ingest]
             + [f"normalize {r.summary()}" for r in self.normalize]
             + [f"validate  {r.summary()}" for r in self.validate]
+            + [f"derive    {r.summary()}" for r in self.derive]
         )
 
     def to_dict(self) -> dict:
@@ -93,7 +101,8 @@ class PipelineResult:
                 {"day": d["day"], "error": "; ".join(c["detail"] for c in d["checks"] if c["status"] == "FAIL")}
                 for r in self.validate for d in r.days if d["status"] == "FAIL"
             ]
-            + [{"day": m, "error": "нет событий за день внутри собранного диапазона"} for r in self.validate for m in r.missing_days],
+            + [{"day": m, "error": "нет событий за день внутри собранного диапазона"} for r in self.validate for m in r.missing_days]
+            + [{"day": x.day, "error": x.error} for r in self.derive for x in r.results if x.status == "failed"],
         }
 
 
@@ -105,8 +114,9 @@ async def run_pipeline_async(params: PipelineParams, on_progress: Optional[Progr
     do_ingest = params.stage in ("all", "ingest")
     do_normalize = params.stage in ("all", "normalize")
     do_validate = params.stage in ("all", "validate")
+    do_derive = params.stage in ("all", "derive")
     # Веса этапов для общего прогресс-бара
-    units: List[str] = (["ingest"] * len(params.data_types) if do_ingest else []) + (["normalize"] if do_normalize else []) + (["validate"] if do_validate else [])
+    units: List[str] = (["ingest"] * len(params.data_types) if do_ingest else []) + (["normalize"] if do_normalize else []) + (["validate"] if do_validate else []) + (["derive"] if do_derive else [])
     total_units = len(units) * len(params.symbols)
     done_units = 0
 
@@ -143,6 +153,15 @@ async def run_pipeline_async(params: PipelineParams, on_progress: Optional[Progr
                 validate_symbol, symbol, params.exchange, params.processed_dir, val_start, end, False, on_progress=cb
             )
             result.validate.append(summary)
+            done_units += 1
+
+        if do_derive:
+            d_start = start if params.mode == "backfill" else None
+            cb = lambda i, n, s=symbol: report(i / max(n, 1), f"{s} производные датасеты: {i}/{n} дн.")
+            drep = await asyncio.to_thread(
+                derive_symbol, symbol, params.exchange, params.processed_dir, d_start, end, params.force, cb
+            )
+            result.derive.append(drep)
             done_units += 1
 
     report(0, "Готово")

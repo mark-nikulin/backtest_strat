@@ -36,7 +36,7 @@ class JobRequest(BaseModel):
     start: Optional[date] = None
     end: Optional[date] = None
     data_types: List[Literal["trades", "orderbook"]] = Field(default_factory=lambda: list(DATA_TYPES))
-    stage: Literal["all", "ingest", "normalize", "validate"] = "all"
+    stage: Literal["all", "ingest", "normalize", "validate", "derive"] = "all"
     raw_dir: str = RAW_DIR
     processed_dir: str = PROCESSED_DIR
     max_concurrent: int = Field(5, ge=1, le=32)
