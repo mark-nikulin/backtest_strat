@@ -8,13 +8,13 @@
 
 ### 1.1. Базовые абстракции
 Архитектура построена на паттерне «Шаблонный метод» (Template Method):
-* [`BaseExchangeFetcher`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/fetchers/base.py) инкапсулирует всю общую инфраструктурную логику:
+* [`BaseExchangeFetcher`](../backtest_strat/fetchers/base.py) инкапсулирует всю общую инфраструктурную логику:
   * Проверка идемпотентности (пропуск уже скачанных файлов).
   * Атомарная запись на диск через временные `.part` файлы.
   * Механизм повторов (Exponential Backoff + full jitter, обработка `Retry-After`).
   * Параллельный Backfill с ограничением конкурентности (`asyncio.Semaphore`).
   * Сбор отчета `BackfillReport` с изоляцией ошибок (падение одного дня не ломает весь диапазон).
-* Наследники (например, [`OkxFetcher`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/fetchers/okx.py)) определяют только специфику конкретной биржи:
+* Наследники (например, [`OkxFetcher`](../backtest_strat/fetchers/okx.py)) определяют только специфику конкретной биржи:
   * Список поддерживаемых типов данных (`supported_data_types`).
   * Схему формирования имени архива (`archive_filename`).
   * Список кандидатных URL-адресов в порядке приоритета (`candidate_urls`).

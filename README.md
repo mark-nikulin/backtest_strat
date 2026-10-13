@@ -44,10 +44,10 @@ flowchart TD
 ```
 
 1. **`Raw` (`data/raw/<exchange>/<symbol>/<data_type>/`):** Неизменяемые архивы с биржи.
-2. **`Normalized` (`data/processed/.../<data_type>/year=YYYY/month=MM/`):** Промежуточный Parquet по схеме [`EVENT_SCHEMA`](file:///Users/kyle/main/py_files/backtest_strat/docs/normalization.md).
+2. **`Normalized` (`data/processed/.../<data_type>/year=YYYY/month=MM/`):** Промежуточный Parquet по схеме [`EVENT_SCHEMA`](docs/normalization.md).
 3. **`Events` (`data/processed/.../events/year=YYYY/month=MM/<date>.parquet`):** Объединенный суточный поток событий по шкале UTC `[00:00:00, 24:00:00)`, детерминированно отсортированный по `(ts, is_book, msg_id, level)`.
 4. **`Derived` (`data/processed/.../{l1, bars_1s, bars_1m}/`):** Производные витрины (L1 вершина книги, 1s и 1m бары с as-of котировками).
-5. **`Simulation & Research`:** Симулятор исполнения рыночных и лимитных ордеров ([`BacktestEngine`](file:///Users/kyle/main/py_files/backtest_strat/docs/backtest.md)) и инструменты статистического анализа ([`backtest_strat/research`](file:///Users/kyle/main/py_files/backtest_strat/docs/research_workflow.md)).
+5. **`Simulation & Research`:** Симулятор исполнения рыночных и лимитных ордеров ([`BacktestEngine`](docs/backtest.md)) и инструменты статистического анализа ([`backtest_strat/research`](docs/research_workflow.md)).
 
 ---
 
@@ -168,6 +168,6 @@ backtest_strat/
 
 ## 5. Дополнительные ссылки
 
-* [**Оглавление документации (`docs/README.md`)**](file:///Users/kyle/main/py_files/backtest_strat/docs/README.md) — детальные описания каждого модуля платформы и журнал сверки.
-* [**Дорожная карта проекта (`ROADMAP.md`)**](file:///Users/kyle/main/py_files/backtest_strat/ROADMAP.md) — перечень завершенных и запланированных фаз развития.
-* [**Шаблон исследования (`research/template/`)**](file:///Users/kyle/main/py_files/backtest_strat/research/template/) — правила формулировки гипотез, предрегистрация и структура альфа-исследований.
+* [**Оглавление документации (`docs/README.md`)**](docs/README.md) — детальные описания каждого модуля платформы и журнал сверки.
+* [**Дорожная карта проекта (`ROADMAP.md`)**](ROADMAP.md) — перечень завершенных и запланированных фаз развития.
+* [**Шаблон исследования (`research/template/`)**](research/template) — правила формулировки гипотез, предрегистрация и структура альфа-исследований.

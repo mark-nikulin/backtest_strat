@@ -229,13 +229,13 @@ BTC-USDT,465953986,buy,42457.6,0.00515982,1704038400408
 * **Что заложить в код:** Метод генерации ссылки должен сначала проверять URL с `/pro/`, а при получении `HTTP 404` делать fallback на классический URL без `/pro/`.
 
 ### 5. Идемпотентность и стратегия скачивания
-* Перед отправкой HTTP-запроса скрипт должен проверять наличие файла в `data/raw/trades/{symbol}-{date}.zip`. Если файл существует и валиден (проверка `zipfile.is_zipfile`), сетевой запрос пропускается.
+* Перед отправкой HTTP-запроса скрипт должен проверять наличие файла в `data/raw/okx/{symbol}/trades/{symbol}-trades-{date}.zip`. Если файл существует и валиден (проверка `zipfile.is_zipfile`), сетевой запрос пропускается.
 * При 429/500/502/503 ошибках обязателен механизм **Exponential Backoff** (паузы 1s -> 2s -> 4s -> 8s).
 
 ---
 
 ## 5. Расположение вспомогательных утилит
-* Минимальный изолированный тестовый скрипт: [`scripts/test_okx_fetch.py`](file:///Users/kyle/main/py_files/backtest_strat/scripts/test_okx_fetch.py)
+* Минимальный изолированный тестовый скрипт: [`scripts/test_okx_fetch.py`](../scripts/test_okx_fetch.py)
 * Запуск валидации:
   ```bash
   python3 scripts/test_okx_fetch.py --instId BTC-USDT --date 2024-01-01 --type both

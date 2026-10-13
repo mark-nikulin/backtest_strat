@@ -103,12 +103,12 @@ data/processed/<exchange>/<symbol>/
   1. Изменился размер или контрольные свойства файла событий `events/.../<date>.parquet`.
   2. Передан флаг принудительной пересборки `force=True`.
   3. Пропал хотя бы один из ранее созданных parquet-файлов на диске.
-  4. Повышена версия логики `DERIVE_VERSION` в [backtest_strat/derived/runner.py](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/derived/runner.py).
+  4. Повышена версия логики `DERIVE_VERSION` в [backtest_strat/derived/runner.py](../backtest_strat/derived/runner.py).
 - Все операции с файлами защищены межпроцессным файловым замком `.derived.lock`.
 
 ### Сборка баров только из сделок (`derive_trades`)
 Если L2-события за день отсутствуют, но имеются нормализованные файлы сделок за день $D$ и $D+1$ (покрывающие полные сутки UTC):
-- Модуль [`backtest_strat/derived/trade_bars.py`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/derived/trade_bars.py) автоматически агрегирует `bars_1s` и `bars_1m` напрямую из сделок.
+- Модуль [`backtest_strat/derived/trade_bars.py`](../backtest_strat/derived/trade_bars.py) автоматически агрегирует `bars_1s` и `bars_1m` напрямую из сделок.
 - В манифесте фиксируется ключ `derive_trades: <day>`.
 - Слой `l1` не создается, а поля `mid_close` и `spread_close` в барах остаются `null`.
 - Дни с полными L2-событиями всегда имеют приоритет над сделками.
@@ -118,7 +118,7 @@ data/processed/<exchange>/<symbol>/
 
 ## 6. Примеры чтения данных
 
-Для чтения данных используйте высокоуровневые функции из [backtest_strat/storage/reader.py](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/storage/reader.py):
+Для чтения данных используйте высокоуровневые функции из [backtest_strat/storage/reader.py](../backtest_strat/storage/reader.py):
 
 ### Чтение секундных баров за диапазон дат
 

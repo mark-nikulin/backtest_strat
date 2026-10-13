@@ -18,10 +18,10 @@ flowchart LR
     Context -->|Submit| ReplayBook
 ```
 
-* **[`ReplayBook`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/book.py):** Восстановленная книга заявок L2 и локальный матчинг ордеров стратегии.
-* **[`BacktestEngine`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/engine.py):** Главный цикл обработки очереди событий, доставка рыночных обновлений и таймеров.
-* **[`Portfolio`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/portfolio.py):** Учет открытой позиции, средней цены входа, комиссий, реализованного и нереализованного PnL.
-* **[`Context`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/strategy.py):** Изолированный интерфейс стратегии для запроса котировок и отправки торговых приказов.
+* **[`ReplayBook`](../backtest_strat/backtest/book.py):** Восстановленная книга заявок L2 и локальный матчинг ордеров стратегии.
+* **[`BacktestEngine`](../backtest_strat/backtest/engine.py):** Главный цикл обработки очереди событий, доставка рыночных обновлений и таймеров.
+* **[`Portfolio`](../backtest_strat/backtest/portfolio.py):** Учет открытой позиции, средней цены входа, комиссий, реализованного и нереализованного PnL.
+* **[`Context`](../backtest_strat/backtest/strategy.py):** Изолированный интерфейс стратегии для запроса котировок и отправки торговых приказов.
 
 ---
 
@@ -64,7 +64,7 @@ flowchart LR
 
 ## 5. Как написать стратегию
 
-Для создания стратегии достаточно унаследовать класс [`Strategy`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/strategy.py#L94):
+Для создания стратегии достаточно унаследовать класс [`Strategy`](../backtest_strat/backtest/strategy.py#L94):
 
 ```python
 from backtest_strat.backtest import BUY, SELL, Context, Strategy
@@ -107,7 +107,7 @@ python scripts/run_backtest.py \
 
 ---
 
-## 7. Метрики отчета ([`summarize`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/report.py#L14))
+## 7. Метрики отчета ([`summarize`](../backtest_strat/backtest/report.py#L14))
 
 * **`total_pnl`:** Итоговый финансовый результат ($\text{realized} + \text{unrealized} - \text{fees}$).
 * **`maker_share`:** Доля сделок, исполненных пассивно в качестве maker (важно для стратегий, зависящих от maker-rebates).

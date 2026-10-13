@@ -6,7 +6,7 @@
 
 Цель этапа — гарантировать физическую и логическую корректность рыночных данных перед запуском бэктеста и симуляции стратегий, а также локализовать дефекты рыночных фидов биржи OKX.
 
-Валидация выполняется в один потоковый проход (`pq.ParquetFile.iter_batches`), используя легковесную реализацию стакана (`_Book` в [backtest_strat/validation/day.py](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/validation/day.py)). Это обеспечивает высокую скорость работы и независимость от параметров инструмента (шага цены и лота).
+Валидация выполняется в один потоковый проход (`pq.ParquetFile.iter_batches`), используя легковесную реализацию стакана (`_Book` в [backtest_strat/validation/day.py](../backtest_strat/validation/day.py)). Это обеспечивает высокую скорость работы и независимость от параметров инструмента (шага цены и лота).
 
 ---
 
@@ -54,7 +54,7 @@
   - Небольшие паузы в стакане ($30\,\text{с} < \text{gap} \le 300\,\text{с}$).
   - Небольшая доля сделок вне спреда (может возникать из-за сетевой задержки доставки тиков биржи).
   - Кратковременные спайки с возвратом цены.
-- **Действие:** Бэктест запускать можно. Движок симуляции ([BacktestEngine](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/engine.py)) автоматически дождется первого снапшота перед вызовом `on_start` и проигнорирует сделки до этого момента. Однако следует учитывать, что в периоды гэпов активность рынка отсутствовала.
+- **Действие:** Бэктест запускать можно. Движок симуляции ([BacktestEngine](../backtest_strat/backtest/engine.py)) автоматически дождется первого снапшота перед вызовом `on_start` и проигнорирует сделки до этого момента. Однако следует учитывать, что в периоды гэпов активность рынка отсутствовала.
 
 ### 🔴 `FAIL`
 - **Значение:** Критические дефекты, делающие симуляцию недостоверной:
@@ -72,7 +72,7 @@
 
 ## 4. Конфигурация порогов (`Thresholds`)
 
-Пороги проверок инкапсулированы в датаклассе [Thresholds](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/validation/day.py):
+Пороги проверок инкапсулированы в датаклассе [Thresholds](../backtest_strat/validation/day.py):
 
 ```python
 @dataclass(frozen=True)
@@ -89,7 +89,7 @@ class Thresholds:
     max_examples: int = 5                 # Макс. число примеров аномалий в отчете
 ```
 
-При программном вызове экземпляр `Thresholds` можно передавать в [validate_symbol](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/validation/runner.py) или [validate_events_file](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/validation/day.py).
+При программном вызове экземпляр `Thresholds` можно передавать в [validate_symbol](../backtest_strat/validation/runner.py) или [validate_events_file](../backtest_strat/validation/day.py).
 
 ---
 

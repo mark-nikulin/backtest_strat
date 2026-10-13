@@ -8,17 +8,18 @@
 
 | Документ | Описание |
 | :--- | :--- |
-| [**`backtest.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/backtest.md) | Архитектура event-driven бэктестера: симуляция очереди заявок (`ReplayBook`), учет задержек, комиссии, управление позицией и расчет метрик. |
-| [**`cli.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/cli.md) | Консольный интерфейс `backtest_strat.cli`: параметры запуска, стадии (`ingest`, `normalize`, `validate`, `derive`), коды возврата и cron. |
-| [**`data_quality.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/data_quality.md) | Контроль качества рыночных данных: 9 проверок L2-стакана, 6 проверок trades-only, кэширование отчетов и пороги аномалий. |
-| [**`derived_datasets.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/derived_datasets.md) | Производные датасеты: тиковый `l1`, бары `bars_1s` и `bars_1m`, as-of mid/спред и построение баров из одних сделок (`trade_bars`). |
-| [**`ingestion.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/ingestion.md) | Модуль загрузки сырых архивов: шаблонный метод `BaseExchangeFetcher`, отказоустойчивость, exponential backoff, метаданные инструментов. |
-| [**`normalization.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/normalization.md) | Нормализация сырых архивов в схему `EVENT_SCHEMA`, детерминированная сортировка `SORT_KEYS`, согласование таймзон UTC+8 и UTC. |
-| [**`okx_historical_data.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/okx_historical_data.md) | Техническая спецификация публичных архивов биржи OKX: эндпоинты CDN, форматы сделок (ZIP/CSV) и стакана L2 400lv (TAR.GZ/NDJSON). |
-| [**`operations.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/operations.md) | Эксплуатация и мониторинг: ночной планировщик `backtest_strat.scheduler`, схема двух выключателей, централизованные суточные логи в `logs/`. |
-| [**`research_workflow.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/research_workflow.md) | Исследовательский воркфлоу «идея → векторный тест → бэктест», правила Point-in-Time, ограничения `bar_feed`, векторная оценка (`fast_pnl`). |
-| [**`testing.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/testing.md) | Стратегия тестирования, запуск быстрых/медленных тестов и сводка покрытия кодовой базы (96% coverage). |
-| [**`web_ui.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/web_ui.md) | Веб-интерфейс и HTTP API: бэкенд на FastAPI с пулом задач в SQLite, 5 вкладок Streamlit-дашборда, спецификация REST API. |
+| [**`backtest.md`**](backtest.md) | Архитектура event-driven бэктестера: симуляция очереди заявок (`ReplayBook`), учет задержек, комиссии, управление позицией и расчет метрик. |
+| [**`cli.md`**](cli.md) | Консольный интерфейс `backtest_strat.cli`: параметры запуска, стадии (`ingest`, `normalize`, `validate`, `derive`), коды возврата и cron. |
+| [**`data_quality.md`**](data_quality.md) | Контроль качества рыночных данных: 9 проверок L2-стакана, 6 проверок trades-only, кэширование отчетов и пороги аномалий. |
+| [**`derived_datasets.md`**](derived_datasets.md) | Производные датасеты: тиковый `l1`, бары `bars_1s` и `bars_1m`, as-of mid/спред и построение баров из одних сделок (`trade_bars`). |
+| [**`library.md`**](library.md) | Методичка по подключению библиотеки к своему проекту и полный справочник API: установка, сценарии, каждый класс и метод, консольные команды. |
+| [**`ingestion.md`**](ingestion.md) | Модуль загрузки сырых архивов: шаблонный метод `BaseExchangeFetcher`, отказоустойчивость, exponential backoff, метаданные инструментов. |
+| [**`normalization.md`**](normalization.md) | Нормализация сырых архивов в схему `EVENT_SCHEMA`, детерминированная сортировка `SORT_KEYS`, согласование таймзон UTC+8 и UTC. |
+| [**`okx_historical_data.md`**](okx_historical_data.md) | Техническая спецификация публичных архивов биржи OKX: эндпоинты CDN, форматы сделок (ZIP/CSV) и стакана L2 400lv (TAR.GZ/NDJSON). |
+| [**`operations.md`**](operations.md) | Эксплуатация и мониторинг: ночной планировщик `backtest_strat.scheduler`, схема двух выключателей, централизованные суточные логи в `logs/`. |
+| [**`research_workflow.md`**](research_workflow.md) | Исследовательский воркфлоу «идея → векторный тест → бэктест», правила Point-in-Time, ограничения `bar_feed`, векторная оценка (`fast_pnl`). |
+| [**`testing.md`**](testing.md) | Стратегия тестирования, запуск быстрых/медленных тестов и сводка покрытия кодовой базы (96% coverage). |
+| [**`web_ui.md`**](web_ui.md) | Веб-интерфейс и HTTP API: бэкенд на FastAPI с пулом задач в SQLite, 5 вкладок Streamlit-дашборда, спецификация REST API. |
 
 ---
 
