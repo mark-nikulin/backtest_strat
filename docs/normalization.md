@@ -1,6 +1,6 @@
 # Архитектура модуля Normalization & Storage
 
-Модуль `src/normalizers` и `src/storage` отвечает за потоковую трансформацию разнородных сырых архивов бирж (ZIP/CSV, TAR.GZ/NDJSON) в единую унифицированную схему событий [`EVENT_SCHEMA`](file:///Users/kyle/main/py_files/backtest_strat/src/normalizers/schema.py), детерминированную сортировку по времени и источникам, и сохранение в партиционированный формат Parquet.
+Модуль `backtest_strat/normalizers` и `backtest_strat/storage` отвечает за потоковую трансформацию разнородных сырых архивов бирж (ZIP/CSV, TAR.GZ/NDJSON) в единую унифицированную схему событий [`EVENT_SCHEMA`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/normalizers/schema.py), детерминированную сортировку по времени и источникам, и сохранение в партиционированный формат Parquet.
 
 ---
 
@@ -45,7 +45,7 @@ flowchart TD
 Криптовалютные биржи (включая OKX) фиксируют события с миллисекундной точностью (`created_time[ms]`). На ликвидных инструментах в одну и ту же миллисекунду происходят десятки событий:
 - В среднем за сутки происходит **~7 000+ совпадений** миллисекундных таймстемпов между сделками и обновлениями книги.
 
-Для обеспечения 100% повторяемости бэктеста применяется строгий кортеж ключей сортировки [`SORT_KEYS`](file:///Users/kyle/main/py_files/backtest_strat/src/normalizers/schema.py#L40):
+Для обеспечения 100% повторяемости бэктеста применяется строгий кортеж ключей сортировки [`SORT_KEYS`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/normalizers/schema.py#L40):
 
 $$\text{SORT\_KEYS} = (\text{ts},\; \text{is\_book},\; \text{msg\_id},\; \text{level})$$
 
@@ -73,7 +73,7 @@ $$\text{SORT\_KEYS} = (\text{ts},\; \text{is\_book},\; \text{msg\_id},\; \text{l
 
 ## 5. Идемпотентность и атомарность записи
 
-1. **Реестр манифеста ([`Manifest`](file:///Users/kyle/main/py_files/backtest_strat/src/storage/parquet.py)):**
+1. **Реестр манифеста ([`Manifest`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/storage/parquet.py)):**
    В каталоге инструмента хранится `_manifest.json`, в котором фиксируются:
    - Фингерпринт исходных файлов (имя + точный размер в байтах).
    - Список сгенерированных выходных файлов Parquet.
@@ -89,8 +89,8 @@ $$\text{SORT\_KEYS} = (\text{ts},\; \text{is\_book},\; \text{msg\_id},\; \text{l
 
 ```python
 from datetime import date
-from src.normalizers.schema import BOOK_SNAPSHOT, BOOK_UPDATE, BUY, SELL, TRADE
-from src.storage.reader import iter_events
+from backtest_strat.normalizers.schema import BOOK_SNAPSHOT, BOOK_UPDATE, BUY, SELL, TRADE
+from backtest_strat.storage.reader import iter_events
 
 current_msg_id = None
 pending_book_updates = []
@@ -125,7 +125,7 @@ for batch in iter_events("BTC-USDT", date(2024, 1, 1), date(2024, 1, 1)):
 
 ```python
 from datetime import date
-from src.storage.reader import iter_events, load_events
+from backtest_strat.storage.reader import iter_events, load_events
 
 # Потоковое чтение батчами по 100_000 строк (минимальный расход памяти)
 for batch in iter_events("BTC-USDT", date(2024, 1, 1), date(2024, 1, 7), batch_size=100_000):

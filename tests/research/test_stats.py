@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.research.stats import (
+from backtest_strat.research.stats import (
     benjamini_hochberg,
     cluster_ols,
     daily_tstat,
@@ -131,7 +131,7 @@ def test_benjamini_hochberg():
 
 
 def test_sharpe_hourly():
-    from src.research.stats import sharpe_hourly
+    from backtest_strat.research.stats import sharpe_hourly
 
     # Less than 24 hours -> nan
     short = pd.Series([10.0] * 10)
@@ -150,7 +150,7 @@ def test_sharpe_hourly():
 
 
 def test_edge_ttest():
-    from src.research.stats import edge_ttest
+    from backtest_strat.research.stats import edge_ttest
 
     # < 48 valid observations -> nan
     res_short = edge_ttest(np.ones(20), np.ones(20), np.ones(20, dtype=bool))
@@ -177,7 +177,7 @@ def test_edge_ttest():
 
 
 def test_interaction_regression():
-    from src.research.stats import interaction_regression
+    from backtest_strat.research.stats import interaction_regression
 
     # < 200 rows -> nan
     df_short = pd.DataFrame({

@@ -6,8 +6,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from src.backtest.book import ReplayBook
-from src.derived.build import (
+from backtest_strat.backtest.book import ReplayBook
+from backtest_strat.derived.build import (
     BAR_SCHEMA,
     KINDS,
     L1_SCHEMA,
@@ -17,7 +17,7 @@ from src.derived.build import (
     build_l1,
     read_trades,
 )
-from src.normalizers.schema import (
+from backtest_strat.normalizers.schema import (
     BOOK_SNAPSHOT,
     BOOK_UPDATE,
     BUY,
@@ -415,7 +415,7 @@ def test_reference_verification_bars_and_l1(tmp_path: Path):
     np.testing.assert_array_equal(df_bars["trades"].values, ref_trades)
 
     # 2. Compare L1 against ReplayBook
-    from src.backtest.types import InstrumentSpec
+    from backtest_strat.backtest.types import InstrumentSpec
     spec = InstrumentSpec(symbol="BTC-USDT", tick_size=0.1, lot_size=0.01)
     book = ReplayBook(spec)
     file_path = tmp_path / "2024-01-01.parquet"

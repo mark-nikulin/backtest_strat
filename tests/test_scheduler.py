@@ -6,10 +6,10 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 import pytest
 
-from src import scheduler
-from src.pipeline import PipelineResult
-from src.fetchers.base import BackfillReport, DownloadResult, DownloadStatus
-from src.utils.dates import yesterday_utc
+from backtest_strat import scheduler
+from backtest_strat.pipeline import PipelineResult
+from backtest_strat.fetchers.base import BackfillReport, DownloadResult, DownloadStatus
+from backtest_strat.utils.dates import yesterday_utc
 
 
 @pytest.fixture
@@ -124,7 +124,7 @@ def test_status_and_missing_binary(fake_crontab, monkeypatch):
     assert st["will_run"] is True
 
     # Отсутствие бинарника crontab
-    monkeypatch.setattr("src.scheduler.CRONTAB_BIN", "/nonexistent/crontab")
+    monkeypatch.setattr("backtest_strat.scheduler.CRONTAB_BIN", "/nonexistent/crontab")
     st = scheduler.status()
     assert st["cron_installed"] is False
     assert st["cron_error"] == "crontab не найден в системе"
@@ -135,7 +135,7 @@ def test_run_disabled_and_force(fake_crontab):
     _, _, config_file = fake_crontab
     scheduler.set_enabled(False)
 
-    with patch("src.scheduler.run_pipeline") as mock_run:
+    with patch("backtest_strat.scheduler.run_pipeline") as mock_run:
         code = scheduler.run(force_run=False)
         assert code == 0
         assert not mock_run.called
@@ -164,7 +164,7 @@ def test_run_lookback_dates_and_failures(fake_crontab):
         captured_params = params
         return PipelineResult()
 
-    with patch("src.scheduler.run_pipeline", side_effect=fake_run_pipeline):
+    with patch("backtest_strat.scheduler.run_pipeline", side_effect=fake_run_pipeline):
         code = scheduler.run()
         assert code == 0
         assert captured_params is not None
@@ -176,11 +176,11 @@ def test_run_lookback_dates_and_failures(fake_crontab):
     failed_report = BackfillReport("BTC-USDT", "trades", [
         DownloadResult(yesterday, DownloadStatus.FAILED, error="Timeout")
     ])
-    with patch("src.scheduler.run_pipeline", return_value=PipelineResult(ingest=[failed_report])):
+    with patch("backtest_strat.scheduler.run_pipeline", return_value=PipelineResult(ingest=[failed_report])):
         assert scheduler.run() == 1
 
     # При исключении run() возвращает 1
-    with patch("src.scheduler.run_pipeline", side_effect=RuntimeError("Crash")):
+    with patch("backtest_strat.scheduler.run_pipeline", side_effect=RuntimeError("Crash")):
         assert scheduler.run() == 1
 
 

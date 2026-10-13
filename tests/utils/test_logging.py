@@ -3,7 +3,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 import pytest
 
-from src.utils.logging_setup import (
+from backtest_strat.utils.logging_setup import (
     DailyFileHandler,
     cleanup_old_logs,
     read_logs,

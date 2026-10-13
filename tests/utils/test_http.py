@@ -3,8 +3,8 @@ import aiohttp
 from aiohttp import web
 import pytest
 
-from src.utils.http import _parse_retry_after, download_to_file
-from src.utils.retry import NotFoundError, RetryableError
+from backtest_strat.utils.http import _parse_retry_after, download_to_file
+from backtest_strat.utils.retry import NotFoundError, RetryableError
 
 
 def test_parse_retry_after():

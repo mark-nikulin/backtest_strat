@@ -2,8 +2,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.backtest import BacktestEngine, InstrumentSpec, bars_to_events
-from src.backtest.examples import MidMomentum, TouchMarketMaker
+from backtest_strat.backtest import BacktestEngine, InstrumentSpec, bars_to_events
+from backtest_strat.backtest.examples import MidMomentum, TouchMarketMaker
 
 NS = 10 ** 9
 

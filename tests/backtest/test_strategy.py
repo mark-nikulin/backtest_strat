@@ -1,7 +1,7 @@
 import pytest
-from src.backtest.engine import BacktestEngine
-from src.backtest.strategy import Context, Strategy
-from src.backtest.types import BUY, SELL, InstrumentSpec
+from backtest_strat.backtest.engine import BacktestEngine
+from backtest_strat.backtest.strategy import Context, Strategy
+from backtest_strat.backtest.types import BUY, SELL, InstrumentSpec
 
 
 @pytest.fixture

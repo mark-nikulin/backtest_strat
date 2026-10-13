@@ -3,8 +3,8 @@ from pathlib import Path
 from unittest.mock import patch
 import pytest
 
-from src.fetchers import FETCHERS, OkxFetcher, get_fetcher
-from src.fetchers.base import DownloadStatus
+from backtest_strat.fetchers import FETCHERS, OkxFetcher, get_fetcher
+from backtest_strat.fetchers.base import DownloadStatus
 
 
 def test_registry_get_fetcher():
@@ -116,7 +116,7 @@ async def test_okx_list_symbols_success(mock_server):
     mock_server.add_get("/api/v5/public/instruments", instruments_handler)
 
     fetcher = OkxFetcher()
-    with patch("src.fetchers.okx.REST", mock_server.url_for("/api/v5")):
+    with patch("backtest_strat.fetchers.okx.REST", mock_server.url_for("/api/v5")):
         symbols = await fetcher.list_symbols("SPOT")
 
     assert symbols == ["BTC-USDT", "ETH-USDT"]
@@ -166,7 +166,7 @@ async def test_okx_instrument_specs(mock_server):
     mock_server.add_get("/api/v5/public/instruments", instruments_handler)
 
     fetcher = OkxFetcher()
-    with patch("src.fetchers.okx.REST", mock_server.url_for("/api/v5")):
+    with patch("backtest_strat.fetchers.okx.REST", mock_server.url_for("/api/v5")):
         specs = await fetcher.instrument_specs("SPOT")
 
     assert set(specs.keys()) == {"BTC-USDT", "ETH-USDT"}
@@ -211,7 +211,7 @@ async def test_okx_spread_snapshot(mock_server):
     mock_server.add_get("/api/v5/market/tickers", tickers_handler)
 
     fetcher = OkxFetcher()
-    with patch("src.fetchers.okx.REST", mock_server.url_for("/api/v5")):
+    with patch("backtest_strat.fetchers.okx.REST", mock_server.url_for("/api/v5")):
         spreads = await fetcher.spread_snapshot("SPOT")
 
     assert list(spreads.keys()) == ["BTC-USDT"]

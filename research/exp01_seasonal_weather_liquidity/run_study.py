@@ -25,15 +25,15 @@ sys.path.insert(0, str(HERE))
 
 from study import analyze, data, stats  # noqa: E402
 from study.config import PARAMS, UNIVERSE, VARIANTS  # noqa: E402
-from src.derived import derive_symbol  # noqa: E402
-from src.utils.logging_setup import setup_logging  # noqa: E402
-from src.validation import validate_symbol  # noqa: E402
+from backtest_strat.derived import derive_symbol  # noqa: E402
+from backtest_strat.utils.logging_setup import setup_logging  # noqa: E402
+from backtest_strat.validation import validate_symbol  # noqa: E402
 
 RESULTS = HERE / "results"
 
 
 def write_progress(stage: str, fraction: float, message: str) -> None:
-    """Файл для src/ui/monitor.py: прогресс исследования виден в вебе."""
+    """Файл для backtest_strat/ui/monitor.py: прогресс исследования виден в вебе."""
     RESULTS.mkdir(exist_ok=True)
     tmp = RESULTS / "progress.json.tmp"
     tmp.write_text(json.dumps({"stage": stage, "fraction": round(fraction, 4), "message": message, "ts": time.time()}))

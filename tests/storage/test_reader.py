@@ -3,9 +3,9 @@ from pathlib import Path
 import pyarrow as pa
 import pyarrow.parquet as pq
 
-from src.normalizers.schema import EVENT_SCHEMA, TRADE, BUY
-from src.storage.parquet import PartitionedParquetWriter
-from src.storage.reader import event_files, iter_events, load_events
+from backtest_strat.normalizers.schema import EVENT_SCHEMA, TRADE, BUY
+from backtest_strat.storage.parquet import PartitionedParquetWriter
+from backtest_strat.storage.reader import event_files, iter_events, load_events
 
 
 def _create_event_day(root: Path, d: date, rows: int = 10) -> Path:
@@ -107,7 +107,7 @@ def test_load_events_success_and_empty(tmp_path: Path):
 
 
 def test_derived_files_and_invalid_kind(tmp_path: Path):
-    from src.storage.reader import derived_files, load_derived
+    from backtest_strat.storage.reader import derived_files, load_derived
     import pytest
 
     # 1. Invalid kind raises ValueError
@@ -119,8 +119,8 @@ def test_derived_files_and_invalid_kind(tmp_path: Path):
 
 
 def test_load_derived_multi_days_and_missing_day(tmp_path: Path):
-    from src.derived.build import BAR_SCHEMA
-    from src.storage.reader import derived_files, load_derived
+    from backtest_strat.derived.build import BAR_SCHEMA
+    from backtest_strat.storage.reader import derived_files, load_derived
 
     # Create synthetic bars for day 1 and day 3 (day 2 missing)
     d1 = date(2024, 1, 1)
@@ -170,8 +170,8 @@ def test_load_derived_multi_days_and_missing_day(tmp_path: Path):
 
 
 def test_load_derived_empty_and_columns(tmp_path: Path):
-    from src.derived.build import BAR_SCHEMA
-    from src.storage.reader import load_derived
+    from backtest_strat.derived.build import BAR_SCHEMA
+    from backtest_strat.storage.reader import load_derived
 
     # Empty range returns empty table with full schema
     empty_table = load_derived("bars_1s", "BTC-USDT", date(2024, 2, 1), date(2024, 2, 2), processed_dir=str(tmp_path))

@@ -5,8 +5,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from src.normalizers.schema import BOOK_SNAPSHOT, BOOK_UPDATE, BUY, EVENT_SCHEMA, SELL, TRADE
-from src.validation.day import FAIL, OK, WARN, Thresholds, validate_events_file
+from backtest_strat.normalizers.schema import BOOK_SNAPSHOT, BOOK_UPDATE, BUY, EVENT_SCHEMA, SELL, TRADE
+from backtest_strat.validation.day import FAIL, OK, WARN, Thresholds, validate_events_file
 
 NS = 1_000_000_000
 

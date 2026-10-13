@@ -1,7 +1,7 @@
 import asyncio
 import pytest
 
-from src.utils.sync import run_sync
+from backtest_strat.utils.sync import run_sync
 
 
 async def _sample_coro(val: int) -> int:

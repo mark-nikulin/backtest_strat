@@ -3,7 +3,7 @@ from pathlib import Path
 import time
 import pytest
 
-from src.utils.locks import file_lock
+from backtest_strat.utils.locks import file_lock
 
 
 def _hold_lock(lock_path_str: str, duration: float, ready_event):

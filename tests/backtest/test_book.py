@@ -1,6 +1,6 @@
 import pytest
-from src.backtest.book import ReplayBook
-from src.backtest.types import BUY, SELL, InstrumentSpec, Order, Fill, next_order_id
+from backtest_strat.backtest.book import ReplayBook
+from backtest_strat.backtest.types import BUY, SELL, InstrumentSpec, Order, Fill, next_order_id
 
 
 @pytest.fixture

@@ -1,7 +1,7 @@
-from src.backtest.engine import BacktestResult
-from src.backtest.portfolio import Portfolio
-from src.backtest.report import format_summary, summarize
-from src.backtest.types import BUY, Fill, InstrumentSpec
+from backtest_strat.backtest.engine import BacktestResult
+from backtest_strat.backtest.portfolio import Portfolio
+from backtest_strat.backtest.report import format_summary, summarize
+from backtest_strat.backtest.types import BUY, Fill, InstrumentSpec
 
 
 def test_summarize_order_fill_ratio_and_max_dd():

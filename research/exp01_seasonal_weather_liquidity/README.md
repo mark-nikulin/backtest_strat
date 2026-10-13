@@ -75,7 +75,7 @@
 
 ```bash
 # 1. данные (около 3 ГБ, 15–25 минут)
-python -m src.cli --exchange okx --symbol BTC-USDT ETH-USDT SOL-USDT XRP-USDT DOGE-USDT LTC-USDT ADA-USDT AVAX-USDT \
+python -m backtest_strat.cli --exchange okx --symbol BTC-USDT ETH-USDT SOL-USDT XRP-USDT DOGE-USDT LTC-USDT ADA-USDT AVAX-USDT \
     LINK-USDT DOT-USDT ATOM-USDT ETC-USDT BCH-USDT UNI-USDT FIL-USDT TRX-USDT \
     --mode backfill --start 2024-01-01 --end 2024-06-30 --data-type trades --stage all
 # 2. исследование

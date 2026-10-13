@@ -21,7 +21,7 @@ sys.path.insert(0, str(HERE))
 
 from study import features  # noqa: E402
 from study.config import PARAMS as P  # noqa: E402
-from src.research import stats  # noqa: E402
+from backtest_strat.research import stats  # noqa: E402
 
 IDX = pd.date_range("2024-01-01", periods=4344, freq="h")
 

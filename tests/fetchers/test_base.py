@@ -6,7 +6,7 @@ import aiohttp
 from aiohttp import web
 import pytest
 
-from src.fetchers.base import (
+from backtest_strat.fetchers.base import (
     BackfillReport,
     BaseExchangeFetcher,
     DownloadResult,

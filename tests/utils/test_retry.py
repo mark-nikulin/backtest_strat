@@ -2,7 +2,7 @@ import asyncio
 from unittest.mock import AsyncMock, patch
 import pytest
 
-from src.utils.retry import (
+from backtest_strat.utils.retry import (
     NotFoundError,
     RetryableError,
     compute_backoff,

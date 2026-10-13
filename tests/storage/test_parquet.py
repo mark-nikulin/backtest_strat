@@ -4,8 +4,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from src.normalizers.schema import EVENT_SCHEMA, TRADE, BUY
-from src.storage.parquet import Manifest, PartitionedParquetWriter, partition_dir
+from backtest_strat.normalizers.schema import EVENT_SCHEMA, TRADE, BUY
+from backtest_strat.storage.parquet import Manifest, PartitionedParquetWriter, partition_dir
 
 
 def _make_sample_table(timestamps_utc: list[datetime]) -> pa.Table:

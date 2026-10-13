@@ -17,3 +17,8 @@ logs/
 # исследования: перегенерируемые артефакты
 research/**/results/features.parquet
 research/**/results/progress.json
+
+# сборка пакета
+dist/
+build/
+*.egg-info/

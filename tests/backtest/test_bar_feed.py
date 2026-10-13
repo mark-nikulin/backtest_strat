@@ -3,11 +3,11 @@ import numpy as np
 import pyarrow as pa
 import pytest
 
-from src.backtest.bar_feed import bars_to_events
-from src.backtest.engine import BacktestEngine
-from src.backtest.schedule import ScheduledPosition
-from src.backtest.types import BUY, InstrumentSpec, SELL
-from src.normalizers.schema import BOOK_SNAPSHOT, EVENT_SCHEMA
+from backtest_strat.backtest.bar_feed import bars_to_events
+from backtest_strat.backtest.engine import BacktestEngine
+from backtest_strat.backtest.schedule import ScheduledPosition
+from backtest_strat.backtest.types import BUY, InstrumentSpec, SELL
+from backtest_strat.normalizers.schema import BOOK_SNAPSHOT, EVENT_SCHEMA
 
 NS = 1_000_000_000
 

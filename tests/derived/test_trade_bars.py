@@ -6,16 +6,16 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from src.derived.build import BAR_SCHEMA
-from src.derived.runner import derive_symbol
-from src.derived.trade_bars import (
+from backtest_strat.derived.build import BAR_SCHEMA
+from backtest_strat.derived.runner import derive_symbol
+from backtest_strat.derived.trade_bars import (
     build_trade_bars_day,
     covered_utc_days,
     read_utc_day_trades,
     trade_source_days,
     trade_source_files,
 )
-from src.normalizers.schema import BOOK_SNAPSHOT, BUY, EVENT_SCHEMA, SELL, TRADE
+from backtest_strat.normalizers.schema import BOOK_SNAPSHOT, BUY, EVENT_SCHEMA, SELL, TRADE
 
 NS = 1_000_000_000
 

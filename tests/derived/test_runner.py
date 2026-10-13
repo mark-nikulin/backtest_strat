@@ -5,8 +5,8 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from src.derived.runner import DeriveReport, DeriveStep, derive_symbol
-from src.normalizers.schema import BOOK_SNAPSHOT, BUY, EVENT_SCHEMA, SELL, TRADE
+from backtest_strat.derived.runner import DeriveReport, DeriveStep, derive_symbol
+from backtest_strat.normalizers.schema import BOOK_SNAPSHOT, BUY, EVENT_SCHEMA, SELL, TRADE
 
 NS = 1_000_000_000
 
@@ -109,7 +109,7 @@ def test_derive_symbol_force_and_event_modification(tmp_path: Path, monkeypatch)
     assert rep_modified.results[0].status == "processed"
 
     # 4. Изменение DERIVE_VERSION вызывает пересчет
-    monkeypatch.setattr("src.derived.runner.DERIVE_VERSION", 999)
+    monkeypatch.setattr("backtest_strat.derived.runner.DERIVE_VERSION", 999)
     rep_ver = derive_symbol("BTC-USDT", exchange="okx", processed_dir=str(tmp_path))
     assert rep_ver.results[0].status == "processed"
 

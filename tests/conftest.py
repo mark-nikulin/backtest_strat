@@ -18,7 +18,7 @@ def pytest_configure(config):
 def isolate_logging(tmp_path, monkeypatch):
     """Изолирует запись логов тестов во временную директорию (ISSUE-P6)."""
     import logging
-    import src.utils.logging_setup as ls
+    import backtest_strat.utils.logging_setup as ls
 
     log_dir = tmp_path / "test_logs"
     log_dir.mkdir(parents=True, exist_ok=True)

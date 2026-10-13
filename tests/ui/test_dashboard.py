@@ -99,7 +99,7 @@ def _mock_httpx_request(method: str, url: str, **kwargs):
 def test_dashboard_smoke():
     import sys
     orig_main_file = getattr(sys.modules.get("__main__"), "__file__", None)
-    dashboard_path = Path(__file__).resolve().parents[2] / "src" / "ui" / "dashboard.py"
+    dashboard_path = Path(__file__).resolve().parents[2] / "backtest_strat" / "ui" / "dashboard.py"
     try:
         with patch("httpx.request", side_effect=_mock_httpx_request):
             at = AppTest.from_file(dashboard_path)

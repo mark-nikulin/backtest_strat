@@ -1,6 +1,6 @@
 # Архитектура бэктестера: Event-Driven Simulation Core
 
-Модуль `src/backtest` представляет собой высокопроизводительный, детерминированный, однопоточный симулятор для HFT и алгоритмических стратегий. Симулятор воспроизводит исторический поток событий из слоя `data/processed/<exchange>/<symbol>/events/` без использования сети и внешних зависимостей.
+Модуль `backtest_strat/backtest` представляет собой высокопроизводительный, детерминированный, однопоточный симулятор для HFT и алгоритмических стратегий. Симулятор воспроизводит исторический поток событий из слоя `data/processed/<exchange>/<symbol>/events/` без использования сети и внешних зависимостей.
 
 ---
 
@@ -18,10 +18,10 @@ flowchart LR
     Context -->|Submit| ReplayBook
 ```
 
-* **[`ReplayBook`](file:///Users/kyle/main/py_files/backtest_strat/src/backtest/book.py):** Восстановленная книга заявок L2 и локальный матчинг ордеров стратегии.
-* **[`BacktestEngine`](file:///Users/kyle/main/py_files/backtest_strat/src/backtest/engine.py):** Главный цикл обработки очереди событий, доставка рыночных обновлений и таймеров.
-* **[`Portfolio`](file:///Users/kyle/main/py_files/backtest_strat/src/backtest/portfolio.py):** Учет открытой позиции, средней цены входа, комиссий, реализованного и нереализованного PnL.
-* **[`Context`](file:///Users/kyle/main/py_files/backtest_strat/src/backtest/strategy.py):** Изолированный интерфейс стратегии для запроса котировок и отправки торговых приказов.
+* **[`ReplayBook`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/book.py):** Восстановленная книга заявок L2 и локальный матчинг ордеров стратегии.
+* **[`BacktestEngine`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/engine.py):** Главный цикл обработки очереди событий, доставка рыночных обновлений и таймеров.
+* **[`Portfolio`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/portfolio.py):** Учет открытой позиции, средней цены входа, комиссий, реализованного и нереализованного PnL.
+* **[`Context`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/strategy.py):** Изолированный интерфейс стратегии для запроса котировок и отправки торговых приказов.
 
 ---
 
@@ -64,10 +64,10 @@ flowchart LR
 
 ## 5. Как написать стратегию
 
-Для создания стратегии достаточно унаследовать класс [`Strategy`](file:///Users/kyle/main/py_files/backtest_strat/src/backtest/strategy.py#L94):
+Для создания стратегии достаточно унаследовать класс [`Strategy`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/strategy.py#L94):
 
 ```python
-from src.backtest import BUY, SELL, Context, Strategy
+from backtest_strat.backtest import BUY, SELL, Context, Strategy
 
 class SimpleSpreadCapture(Strategy):
     def __init__(self, size: float = 0.01):
@@ -94,7 +94,7 @@ class SimpleSpreadCapture(Strategy):
 
 ```bash
 python scripts/run_backtest.py \
-  --strategy src.backtest.examples:TouchMarketMaker \
+  --strategy backtest_strat.backtest.examples:TouchMarketMaker \
   --param size=0.01 \
   --param max_position=0.05 \
   --symbol BTC-USDT \
@@ -107,7 +107,7 @@ python scripts/run_backtest.py \
 
 ---
 
-## 7. Метрики отчета ([`summarize`](file:///Users/kyle/main/py_files/backtest_strat/src/backtest/report.py#L14))
+## 7. Метрики отчета ([`summarize`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/report.py#L14))
 
 * **`total_pnl`:** Итоговый финансовый результат ($\text{realized} + \text{unrealized} - \text{fees}$).
 * **`maker_share`:** Доля сделок, исполненных пассивно в качестве maker (важно для стратегий, зависящих от maker-rebates).

@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.external.weather import _fetch, load_city, load_daily
+from backtest_strat.external.weather import _fetch, load_city, load_daily
 
 
 def _fake_api_response(dates_list, temp_values):
@@ -23,7 +23,7 @@ def _fake_api_response(dates_list, temp_values):
 
 def test_weather_load_daily_lag_days(tmp_path: Path, monkeypatch):
     # Patch load_city's default cache_dir to tmp_path so it doesn't read existing cache
-    from src.external import weather
+    from backtest_strat.external import weather
     monkeypatch.setattr(weather.load_city, "__defaults__", (weather.VARIABLES, tmp_path))
 
     # API provides dates: 2024-01-01 to 2024-01-04

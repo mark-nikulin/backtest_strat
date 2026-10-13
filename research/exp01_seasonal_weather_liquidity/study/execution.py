@@ -1,7 +1,7 @@
 """Исполнение позиций: реэкспорт из проекта + оценка полуспреда для исследования."""
 import numpy as np
 
-from src.research.evaluate import fast_pnl, run_schedule  # noqa: F401
+from backtest_strat.research.evaluate import fast_pnl, run_schedule  # noqa: F401
 
 from .config import PARAMS, Params
 

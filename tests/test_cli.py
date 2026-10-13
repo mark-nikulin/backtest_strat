@@ -1,9 +1,9 @@
 from unittest.mock import MagicMock, patch
 import pytest
 
-from src.cli import main
-from src.pipeline import PipelineResult
-from src.fetchers.base import BackfillReport, DownloadResult, DownloadStatus
+from backtest_strat.cli import main
+from backtest_strat.pipeline import PipelineResult
+from backtest_strat.fetchers.base import BackfillReport, DownloadResult, DownloadStatus
 
 
 def test_cli_missing_required_args():
@@ -36,7 +36,7 @@ def test_cli_validation_error_exits_2():
 def test_cli_success_exit_0():
     fake_result = PipelineResult()
 
-    with patch("src.cli.run_pipeline", return_value=fake_result) as mock_run:
+    with patch("backtest_strat.cli.run_pipeline", return_value=fake_result) as mock_run:
         code = main([
             "--exchange", "okx",
             "--symbol", "BTC-USDT", "ETH-USDT",
@@ -58,7 +58,7 @@ def test_cli_failed_pipeline_exit_1(capsys):
     ])
     fake_result = PipelineResult(ingest=[failed_report])
 
-    with patch("src.cli.run_pipeline", return_value=fake_result):
+    with patch("backtest_strat.cli.run_pipeline", return_value=fake_result):
         code = main([
             "--exchange", "okx",
             "--symbol", "BTC-USDT",

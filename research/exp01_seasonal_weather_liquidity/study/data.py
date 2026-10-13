@@ -11,9 +11,9 @@ ROOT = Path(__file__).resolve().parents[3]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from src.external.weather import load_daily  # noqa: E402
-from src.research.market import instrument_specs as _specs, spread_snapshot as _spreads  # noqa: E402
-from src.research.bars import minute_bars, to_hourly as _to_hourly  # noqa: E402
+from backtest_strat.external.weather import load_daily  # noqa: E402
+from backtest_strat.research.market import instrument_specs as _specs, spread_snapshot as _spreads  # noqa: E402
+from backtest_strat.research.bars import minute_bars, to_hourly as _to_hourly  # noqa: E402
 
 from .config import PARAMS, Params  # noqa: E402
 

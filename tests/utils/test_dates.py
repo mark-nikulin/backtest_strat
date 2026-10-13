@@ -1,7 +1,7 @@
 from datetime import date, datetime, timedelta, timezone
 import pytest
 
-from src.utils.dates import date_range, parse_date, yesterday_utc
+from backtest_strat.utils.dates import date_range, parse_date, yesterday_utc
 
 
 def test_date_range_inclusive():

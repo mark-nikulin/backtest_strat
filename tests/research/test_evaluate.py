@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from src.research.evaluate import fast_pnl, run_schedule
+from backtest_strat.research.evaluate import fast_pnl, run_schedule
 
 
 def test_fast_pnl_turnover_and_costs():

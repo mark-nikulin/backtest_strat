@@ -10,12 +10,12 @@
 
 ### Шаг 1: Запуск API-сервера
 ```bash
-.venv/bin/uvicorn src.api.app:app --host 0.0.0.0 --port 8000
+.venv/bin/uvicorn backtest_strat.api.app:app --host 0.0.0.0 --port 8000
 ```
 
 ### Шаг 2: Запуск веб-дашборда
 ```bash
-.venv/bin/streamlit run src/ui/dashboard.py --server.port 8501
+.venv/bin/streamlit run backtest_strat/ui/dashboard.py --server.port 8501
 ```
 
 После старта дашборд доступен в браузере по адресу: [http://localhost:8501](http://localhost:8501).

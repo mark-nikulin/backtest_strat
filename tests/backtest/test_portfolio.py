@@ -1,6 +1,6 @@
 import pytest
-from src.backtest.portfolio import Portfolio
-from src.backtest.types import BUY, SELL, Fill, next_fill_id
+from backtest_strat.backtest.portfolio import Portfolio
+from backtest_strat.backtest.types import BUY, SELL, Fill, next_fill_id
 
 
 def test_portfolio_accumulation_and_average_price():

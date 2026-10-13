@@ -103,12 +103,12 @@ data/processed/<exchange>/<symbol>/
   1. Изменился размер или контрольные свойства файла событий `events/.../<date>.parquet`.
   2. Передан флаг принудительной пересборки `force=True`.
   3. Пропал хотя бы один из ранее созданных parquet-файлов на диске.
-  4. Повышена версия логики `DERIVE_VERSION` в [src/derived/runner.py](file:///Users/kyle/main/py_files/backtest_strat/src/derived/runner.py).
+  4. Повышена версия логики `DERIVE_VERSION` в [backtest_strat/derived/runner.py](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/derived/runner.py).
 - Все операции с файлами защищены межпроцессным файловым замком `.derived.lock`.
 
 ### Сборка баров только из сделок (`derive_trades`)
 Если L2-события за день отсутствуют, но имеются нормализованные файлы сделок за день $D$ и $D+1$ (покрывающие полные сутки UTC):
-- Модуль [`src/derived/trade_bars.py`](file:///Users/kyle/main/py_files/backtest_strat/src/derived/trade_bars.py) автоматически агрегирует `bars_1s` и `bars_1m` напрямую из сделок.
+- Модуль [`backtest_strat/derived/trade_bars.py`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/derived/trade_bars.py) автоматически агрегирует `bars_1s` и `bars_1m` напрямую из сделок.
 - В манифесте фиксируется ключ `derive_trades: <day>`.
 - Слой `l1` не создается, а поля `mid_close` и `spread_close` в барах остаются `null`.
 - Дни с полными L2-событиями всегда имеют приоритет над сделками.
@@ -118,13 +118,13 @@ data/processed/<exchange>/<symbol>/
 
 ## 6. Примеры чтения данных
 
-Для чтения данных используйте высокоуровневые функции из [src/storage/reader.py](file:///Users/kyle/main/py_files/backtest_strat/src/storage/reader.py):
+Для чтения данных используйте высокоуровневые функции из [backtest_strat/storage/reader.py](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/storage/reader.py):
 
 ### Чтение секундных баров за диапазон дат
 
 ```python
 from datetime import date
-from src.storage.reader import load_derived
+from backtest_strat.storage.reader import load_derived
 
 table = load_derived(
     kind="bars_1s",
@@ -141,7 +141,7 @@ print(df.head())
 
 ```python
 from datetime import date
-from src.storage.reader import load_derived
+from backtest_strat.storage.reader import load_derived
 
 l1_table = load_derived(
     kind="l1",
@@ -156,7 +156,7 @@ print(f"Всего тиков L1: {l1_table.num_rows:,}")
 
 ```python
 from datetime import date
-from src.storage.reader import derived_files
+from backtest_strat.storage.reader import derived_files
 
 files = derived_files("bars_1m", "BTC-USDT", date(2024, 1, 1), date(2024, 1, 31))
 for path in files:
@@ -167,21 +167,21 @@ for path in files:
 
 ## 7. Запуск сборки
 
-### Через CLI (`src.cli`)
+### Через CLI (`backtest_strat.cli`)
 
 Запуск только сборки производных датасетов:
 ```bash
-python -m src.cli --exchange okx --symbol BTC-USDT --stage derive --start 2024-01-01 --end 2024-01-10
+python -m backtest_strat.cli --exchange okx --symbol BTC-USDT --stage derive --start 2024-01-01 --end 2024-01-10
 ```
 
 Полный пайплайн (скачивание $\to$ нормализация $\to$ валидация $\to$ производные датасеты):
 ```bash
-python -m src.cli --exchange okx --symbol BTC-USDT --stage all --mode backfill --start 2024-01-01 --end 2024-01-10
+python -m backtest_strat.cli --exchange okx --symbol BTC-USDT --stage all --mode backfill --start 2024-01-01 --end 2024-01-10
 ```
 
 Принудительная пересборка:
 ```bash
-python -m src.cli --exchange okx --symbol BTC-USDT --stage derive --force
+python -m backtest_strat.cli --exchange okx --symbol BTC-USDT --stage derive --force
 ```
 
 ### Через Web UI

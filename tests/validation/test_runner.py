@@ -3,10 +3,10 @@ from pathlib import Path
 import json
 import pytest
 
-from src.validation.day import FAIL, OK, WARN
-from src.validation.runner import load_reports, validate_symbol
+from backtest_strat.validation.day import FAIL, OK, WARN
+from backtest_strat.validation.runner import load_reports, validate_symbol
 from tests.validation.test_day import _day_start_ns, _write_parquet, NS
-from src.normalizers.schema import BOOK_SNAPSHOT, BUY, SELL
+from backtest_strat.normalizers.schema import BOOK_SNAPSHOT, BUY, SELL
 
 
 def _create_sample_day_parquet(events_root: Path, d: date):

@@ -23,16 +23,16 @@ flowchart TD
    - Низкочастотные сигналы (часы, дни): достаточно минутных или часовых баров.
    - Микроструктурные сигналы (секунды, миллисекунды, очередь заявок): требуется полноценный L2-поток событий (`events/`).
 2. **Подготовка и валидация данных:**
-   - Агрегация минутных баров через [`trade_bars`](file:///Users/kyle/main/py_files/backtest_strat/src/derived/trade_bars.py) или [`load_derived`](file:///Users/kyle/main/py_files/backtest_strat/src/storage/reader.py).
-   - Проверка полноты и чистоты данных через [`validate_symbol`](file:///Users/kyle/main/py_files/backtest_strat/src/validation/trades.py).
+   - Агрегация минутных баров через [`trade_bars`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/derived/trade_bars.py) или [`load_derived`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/storage/reader.py).
+   - Проверка полноты и чистоты данных через [`validate_symbol`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/validation/trades.py).
 3. **Генерация признаков (Point-in-Time):**
    - Строгое соблюдение временной границы: признаки в строке $t$ используют только информацию, известную до $t$.
-   - Внешние источники (например, погода через [`load_daily`](file:///Users/kyle/main/py_files/backtest_strat/src/external/weather.py)) загружаются с обязательным сдвигом `lag_days >= 1`.
+   - Внешние источники (например, погода через [`load_daily`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/external/weather.py)) загружаются с обязательным сдвигом `lag_days >= 1`.
 4. **Быстрый векторный отбор (Fast Prototyping):**
-   - Оценка PnL и оборота через [`fast_pnl`](file:///Users/kyle/main/py_files/backtest_strat/src/research/evaluate.py).
-   - Проверка статистической устойчивости через [`daily_tstat`](file:///Users/kyle/main/py_files/backtest_strat/src/research/stats.py), [`placebo_edge`](file:///Users/kyle/main/py_files/backtest_strat/src/research/stats.py), [`placebo_selectivity`](file:///Users/kyle/main/py_files/backtest_strat/src/research/stats.py) и поправку на множественное тестирование [`benjamini_hochberg`](file:///Users/kyle/main/py_files/backtest_strat/src/research/stats.py).
+   - Оценка PnL и оборота через [`fast_pnl`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/research/evaluate.py).
+   - Проверка статистической устойчивости через [`daily_tstat`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/research/stats.py), [`placebo_edge`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/research/stats.py), [`placebo_selectivity`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/research/stats.py) и поправку на множественное тестирование [`benjamini_hochberg`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/research/stats.py).
 5. **Симуляция исполнения на движке (Execution Simulation):**
-   - Прогон расписания позиций через [`run_schedule`](file:///Users/kyle/main/py_files/backtest_strat/src/research/evaluate.py) с использованием [`ScheduledPosition`](file:///Users/kyle/main/py_files/backtest_strat/src/backtest/schedule.py) и генератора синтетических событий [`bars_to_events`](file:///Users/kyle/main/py_files/backtest_strat/src/backtest/bar_feed.py).
+   - Прогон расписания позиций через [`run_schedule`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/research/evaluate.py) с использованием [`ScheduledPosition`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/schedule.py) и генератора синтетических событий [`bars_to_events`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/bar_feed.py).
 
 ---
 
@@ -51,7 +51,7 @@ flowchart TD
 
 ## 3. Модель `bar_feed` и её ограничения
 
-Модуль [`src/backtest/bar_feed.py`](file:///Users/kyle/main/py_files/backtest_strat/src/backtest/bar_feed.py) преобразует минутные бары в события `EVENT_SCHEMA` (`BOOK_SNAPSHOT`):
+Модуль [`backtest_strat/backtest/bar_feed.py`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/bar_feed.py) преобразует минутные бары в события `EVENT_SCHEMA` (`BOOK_SNAPSHOT`):
 
 * На момент закрытия бара ($t + \Delta t$) формируется снапшот стакана с одним уровнем покупки и продажи:
   $$\text{bid} = \lfloor \text{close} \times (1 - \text{half\_spread\_bps} / 10^4) / \text{tick} \rfloor \times \text{tick}$$
@@ -81,7 +81,7 @@ Look-ahead bias — главная причина ложной доходнос�
    - `ret` в строке $T$ — это доходность, реализуемая **внутри** часа $T$ (от закрытия часа $T-1$ до закрытия часа $T$).
 3. **Задержка внешних данных (`lag_days >= 1`):**
    - Суточные агрегаты (погода Open-Meteo, макропоказатели) публикуются с задержкой.
-   - В функции [`load_daily(start, end, lag_days=1)`](file:///Users/kyle/main/py_files/backtest_strat/src/external/weather.py) наблюдение за сутки $D$ сопоставляется строке $D + \text{lag\_days}$.
+   - В функции [`load_daily(start, end, lag_days=1)`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/external/weather.py) наблюдение за сутки $D$ сопоставляется строке $D + \text{lag\_days}$.
 
 ---
 
@@ -89,7 +89,7 @@ Look-ahead bias — главная причина ложной доходнос�
 
 Перед запуском исследования необходимо проверить чистоту исходных рядов:
 
-1. **Валидация сделок (`src/validation/trades.py`):**
+1. **Валидация сделок (`backtest_strat/validation/trades.py`):**
    - **`FAIL` (недопустимо):** пустые сутки, дубликаты `trade_id`, неположительные цены или объемы ($\le 0$), паузы в сделках $> 6$ часов.
    - **`WARN` (требует внимания):** паузы в сделках $> 1$ часа, скачки цены $\ge 5\%$ за минуту с последующим возвратом $\ge 80\%$, покрытие активных минут $< 25\%$.
 2. **Сводка покрытия (`coverage`):**
@@ -102,11 +102,11 @@ Look-ahead bias — главная причина ложной доходнос�
 
 Для эффективной работы рекомендуется двухступенчатая схема:
 
-1. **Быстрая оценка ([`fast_pnl`](file:///Users/kyle/main/py_files/backtest_strat/src/research/evaluate.py)):**
+1. **Быстрая оценка ([`fast_pnl`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/research/evaluate.py)):**
    - Вычисляет PnL по формуле: $\text{PnL}_t = \text{notional} \times (\text{pos}_t \times (e^{\text{ret}_t} - 1) - |\Delta \text{pos}_t| \times \text{cost})$.
    - Разворот позиции с $+1$ на $-1$ дает $2$ единицы оборота (списание комиссии с обеих сторон).
    - Используется для оптимизации параметров, плацебо-тестов (1000 перестановок) и перебора сетки признаков.
-2. **Движок симулятора ([`run_schedule`](file:///Users/kyle/main/py_files/backtest_strat/src/research/evaluate.py)):**
-   - Проверяет итоговую стратегию через [`ScheduledPosition`](file:///Users/kyle/main/py_files/backtest_strat/src/backtest/schedule.py) и [`BacktestEngine`](file:///Users/kyle/main/py_files/backtest_strat/src/backtest/engine.py).
+2. **Движок симулятора ([`run_schedule`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/research/evaluate.py)):**
+   - Проверяет итоговую стратегию через [`ScheduledPosition`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/schedule.py) и [`BacktestEngine`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/backtest/engine.py).
    - Учитывает округление до шага лота (`lot_size`), задержку отправки ордера (`order_latency_ms`), комиссии биржи (`taker_fee`) и округление цен до тика.
    - На ликвидных инструментах расхождение между `fast_pnl` и `run_schedule` пренебрежимо мало ($< 0.1$ б.п.).

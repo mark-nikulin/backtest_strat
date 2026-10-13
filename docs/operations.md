@@ -10,7 +10,7 @@
 
 ```mermaid
 flowchart TD
-    CronDaemon[Cron Daemon ОС] -->|1. Запуск по времени сервера| SchedulerRun["python -m src.scheduler run"]
+    CronDaemon[Cron Daemon ОС] -->|1. Запуск по времени сервера| SchedulerRun["python -m backtest_strat.scheduler run"]
     SchedulerRun --> CheckConfig{2. Проверка флага enabled в config/schedule.json}
     CheckConfig -->|enabled = true| Pipeline[Запуск Pipeline: Ingest + Normalize]
     CheckConfig -->|enabled = false| Skip["Пропуск (Exit 0, запись в лог 'skip')"]
@@ -18,7 +18,7 @@ flowchart TD
 
 1. **Системный выключатель (`crontab`):**
    - Управляет тем, запускается ли процесс планировщика вообще.
-   - Устанавливается на сервере вручную администратором командой `python -m src.scheduler install`.
+   - Устанавливается на сервере вручную администратором командой `python -m backtest_strat.scheduler install`.
    - В целях безопасности веб-интерфейс (Streamlit UI) и HTTP API **намеренно не имеют прав** редактировать системный crontab пользователя.
 2. **Логический выключатель (`enabled` в `config/schedule.json`):**
    - Управляет тем, выполняет ли запущенный планировщик реальную загрузку.
@@ -31,37 +31,37 @@ flowchart TD
 
 ```bash
 # Проверить статус: включен ли флаг, установлена ли строка в crontab, будет ли выполняться запуск
-python -m src.scheduler status
+python -m backtest_strat.scheduler status
 
 # Включить / выключить логический флаг (меняет config/schedule.json)
-python -m src.scheduler enable
-python -m src.scheduler disable
+python -m backtest_strat.scheduler enable
+python -m backtest_strat.scheduler disable
 
 # Установить / обновить строку в системном crontab (чужие строки не затрагиваются)
-python -m src.scheduler install --time 02:30
+python -m backtest_strat.scheduler install --time 02:30
 
 # Удалить строку проекта из crontab
-python -m src.scheduler uninstall
+python -m backtest_strat.scheduler uninstall
 
 # Показать сгенерированную строку cron без изменения crontab
-python -m src.scheduler show-cron
+python -m backtest_strat.scheduler show-cron
 
 # Ручной запуск ночной процедуры (с ключом --force-run даже если enabled=false)
-python -m src.scheduler run --force-run
+python -m backtest_strat.scheduler run --force-run
 ```
 
 ### Как включить планировщик на новом сервере:
 1. Задать желаемое локальное время и установить запись в cron:
    ```bash
-   python -m src.scheduler install --time 02:30
+   python -m backtest_strat.scheduler install --time 02:30
    ```
 2. Активировать логический флаг:
    ```bash
-   python -m src.scheduler enable
+   python -m backtest_strat.scheduler enable
    ```
 3. Проверить статус:
    ```bash
-   python -m src.scheduler status
+   python -m backtest_strat.scheduler status
    # will_run должен быть True
    ```
 
@@ -90,14 +90,14 @@ python -m src.scheduler run --force-run
 Все подсистемы (CLI, ночной cron, FastAPI сервер, Streamlit UI) пишут логи в общий каталог `logs/` в едином формате:
 
 ```text
-2026-10-11 02:30:00,123 [INFO] [cron] src.scheduler: Ночной запуск: okx ['BTC-USDT'] 2026-10-08..2026-10-10
-2026-10-11 02:30:15,456 [INFO] [cron] src.pipeline: ingest BTC-USDT/trades: downloaded=1, skipped=2, missing=0, failed=0
-2026-10-11 10:15:20,789 [WARNING] [ui] src.api.app: Отклонена задача: end раньше start
+2026-10-11 02:30:00,123 [INFO] [cron] backtest_strat.scheduler: Ночной запуск: okx ['BTC-USDT'] 2026-10-08..2026-10-10
+2026-10-11 02:30:15,456 [INFO] [cron] backtest_strat.pipeline: ingest BTC-USDT/trades: downloaded=1, skipped=2, missing=0, failed=0
+2026-10-11 10:15:20,789 [WARNING] [ui] backtest_strat.api.app: Отклонена задача: end раньше start
 ```
 
 ### Особенности реализации:
 * **Суточные файлы:** Логи пишутся в `pipeline-YYYY-MM-DD.log` (по UTC).
-* **Бесконфликтная ротация:** Обработчик [`DailyFileHandler`](file:///Users/kyle/main/py_files/backtest_strat/src/utils/logging_setup.py#L36) переключает имя файла на лету при наступлении новых суток UTC. Файлы не переименовываются, что исключает гонки при параллельной записи из нескольких процессов.
+* **Бесконфликтная ротация:** Обработчик [`DailyFileHandler`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/utils/logging_setup.py#L36) переключает имя файла на лету при наступлении новых суток UTC. Файлы не переименовываются, что исключает гонки при параллельной записи из нескольких процессов.
 * **Метка источника:** Каждый процесс передает метку `[source]` (`cron`, `cli`, `api`, `ui`). Запросы от Web UI передают заголовок `X-Client: ui`, автоматически логируясь с меткой `[ui]`.
 * **Автоматическая очистка (retention):** При каждом вызове `setup_logging` файлы старше `PIPELINE_LOG_RETENTION_DAYS` (по умолчанию 30 дней) автоматически удаляются.
 * **Склейка Traceback:** Метод `read_logs` агрегирует многострочные стеки ошибок Python в единый объект записи лога.

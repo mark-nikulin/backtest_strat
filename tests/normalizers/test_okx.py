@@ -8,9 +8,9 @@ import zipfile
 import pyarrow as pa
 import pytest
 
-from src.normalizers import get_normalizer
-from src.normalizers.okx import OkxNormalizer
-from src.normalizers.schema import BOOK_SNAPSHOT, BOOK_UPDATE, BUY, EVENT_SCHEMA, SELL, TRADE
+from backtest_strat.normalizers import get_normalizer
+from backtest_strat.normalizers.okx import OkxNormalizer
+from backtest_strat.normalizers.schema import BOOK_SNAPSHOT, BOOK_UPDATE, BUY, EVENT_SCHEMA, SELL, TRADE
 
 
 def make_trades_zip(dest: Path, rows: list[dict]):

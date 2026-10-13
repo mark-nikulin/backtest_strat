@@ -6,9 +6,9 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from src.validation.day import FAIL, OK, WARN
-from src.validation.runner import validate_symbol
-from src.validation.trades import TradeThresholds, validate_trade_day
+from backtest_strat.validation.day import FAIL, OK, WARN
+from backtest_strat.validation.runner import validate_symbol
+from backtest_strat.validation.trades import TradeThresholds, validate_trade_day
 
 NS = 1_000_000_000
 

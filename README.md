@@ -34,7 +34,7 @@ flowchart TD
         NormTrades -.->|trade_bars <br/> fallback if no L2| Bars
     end
 
-    subgraph Layer5 [5. Simulation & Research: src/backtest & research/]
+    subgraph Layer5 [5. Simulation & Research: backtest_strat/backtest & research/]
         Events -->|iter_events| ReplayBook[ReplayBook Matching Engine]
         Bars -->|bars_to_events| BarFeed[Synthetic Bar Feed]
         ReplayBook --> Backtest[BacktestEngine: Queue simulation, Latency, PnL]
@@ -47,9 +47,23 @@ flowchart TD
 2. **`Normalized` (`data/processed/.../<data_type>/year=YYYY/month=MM/`):** Промежуточный Parquet по схеме [`EVENT_SCHEMA`](file:///Users/kyle/main/py_files/backtest_strat/docs/normalization.md).
 3. **`Events` (`data/processed/.../events/year=YYYY/month=MM/<date>.parquet`):** Объединенный суточный поток событий по шкале UTC `[00:00:00, 24:00:00)`, детерминированно отсортированный по `(ts, is_book, msg_id, level)`.
 4. **`Derived` (`data/processed/.../{l1, bars_1s, bars_1m}/`):** Производные витрины (L1 вершина книги, 1s и 1m бары с as-of котировками).
-5. **`Simulation & Research`:** Симулятор исполнения рыночных и лимитных ордеров ([`BacktestEngine`](file:///Users/kyle/main/py_files/backtest_strat/docs/backtest.md)) и инструменты статистического анализа ([`src/research`](file:///Users/kyle/main/py_files/backtest_strat/docs/research_workflow.md)).
+5. **`Simulation & Research`:** Симулятор исполнения рыночных и лимитных ордеров ([`BacktestEngine`](file:///Users/kyle/main/py_files/backtest_strat/docs/backtest.md)) и инструменты статистического анализа ([`backtest_strat/research`](file:///Users/kyle/main/py_files/backtest_strat/docs/research_workflow.md)).
 
 ---
+
+## Использование как библиотеки
+
+Проект устанавливается как пакет и подключается к вашему проекту, где лежит свой код стратегий:
+
+```bash
+pip install -e "/путь/к/backtest_strat[research]"
+```
+```python
+from backtest_strat.backtest import BacktestEngine, Strategy, InstrumentSpec
+```
+
+Консольные команды: `bt-data`, `bt-backtest`, `bt-schedule`, `bt-api`, `bt-dashboard`, `bt-monitor`.
+Подробности, extras, публичный интерфейс и настройка путей данных — [docs/library.md](docs/library.md).
 
 ## 2. Быстрый старт (Quick Start)
 
@@ -58,20 +72,20 @@ flowchart TD
 ### Шаг 1: Скачать и собрать данные
 Загрузить сделки и стакан по паре `BTC-USDT` за первую неделю 2024 года и собрать полный поток событий:
 ```bash
-python -m src.cli --exchange okx --symbol BTC-USDT --mode backfill --start 2024-01-01 --end 2024-01-07 --stage all
+python -m backtest_strat.cli --exchange okx --symbol BTC-USDT --mode backfill --start 2024-01-01 --end 2024-01-07 --stage all
 ```
 
 ### Шаг 2: Проверить качество данных
 Выполнить потоковую валидацию собранных событий (проверка перевернутого стакана, гэпов, рассинхронизации цен и пропущенных дней):
 ```bash
-python -m src.cli --exchange okx --symbol BTC-USDT --stage validate --start 2024-01-01 --end 2024-01-07
+python -m backtest_strat.cli --exchange okx --symbol BTC-USDT --stage validate --start 2024-01-01 --end 2024-01-07
 ```
 
 ### Шаг 3: Запустить бэктест стратегии
 Прогнать пример HFT-стратегии маркет-мейкинга на реальных исторических событиях стакана:
 ```bash
 python scripts/run_backtest.py \
-  --strategy src.backtest.examples:TouchMarketMaker \
+  --strategy backtest_strat.backtest.examples:TouchMarketMaker \
   --param size=0.01 \
   --symbol BTC-USDT \
   --start 2024-01-01 \
@@ -88,10 +102,10 @@ python scripts/run_backtest.py \
 
 ```bash
 # Запуск API-сервера (порт 8000)
-.venv/bin/uvicorn src.api.app:app --host 0.0.0.0 --port 8000 &
+.venv/bin/uvicorn backtest_strat.api.app:app --host 0.0.0.0 --port 8000 &
 
 # Запуск Streamlit дашборда (порт 8501)
-.venv/bin/streamlit run src/ui/dashboard.py --server.port 8501
+.venv/bin/streamlit run backtest_strat/ui/dashboard.py --server.port 8501
 ```
 
 В дашборде доступны:
@@ -130,7 +144,7 @@ backtest_strat/
 │   └── exp01_seasonal_weather_liquidity/ # Исследование сезонности и ликвидности
 ├── scripts/                    # Консольные утилиты запуска бэктестов
 │   └── run_backtest.py         # Запуск стратегий на событиях
-├── src/                        # Исходный код платформы
+├── backtest_strat/                        # Исходный код платформы
 │   ├── api/                    # FastAPI бэкенд и SQLite очередь задач
 │   ├── backtest/               # Движок бэктеста (ReplayBook, Engine, Portfolio)
 │   ├── derived/                # Сборка L1 и баров (в т.ч. trade_bars)

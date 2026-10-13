@@ -2,7 +2,7 @@ from datetime import date
 import pandas as pd
 import pytest
 
-from src.research.bars import minute_bars, to_hourly
+from backtest_strat.research.bars import minute_bars, to_hourly
 
 
 def test_minute_bars_empty(tmp_path, monkeypatch):

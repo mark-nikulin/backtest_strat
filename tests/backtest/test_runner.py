@@ -6,7 +6,7 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 
 from scripts.run_backtest import main
-from src.normalizers.schema import BOOK_SNAPSHOT, BOOK_UPDATE, BUY, EVENT_SCHEMA, SELL, TRADE
+from backtest_strat.normalizers.schema import BOOK_SNAPSHOT, BOOK_UPDATE, BUY, EVENT_SCHEMA, SELL, TRADE
 
 
 def make_events_parquet(dest: Path):
@@ -49,7 +49,7 @@ def test_run_backtest_cli_smoke(tmp_path: Path, capsys):
 
     argv = [
         "scripts/run_backtest.py",
-        "--strategy", "src.backtest.examples:TouchMarketMaker",
+        "--strategy", "backtest_strat.backtest.examples:TouchMarketMaker",
         "--param", "size=0.01",
         "--param", "max_position=0.05",
         "--symbol", "BTC-USDT",

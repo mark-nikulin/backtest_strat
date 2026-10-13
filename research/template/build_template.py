@@ -43,19 +43,19 @@ import sys, pathlib
 from dataclasses import dataclass
 from datetime import date
 
-ROOT = next(p for p in [pathlib.Path.cwd(), *pathlib.Path.cwd().parents] if (p / "src").is_dir())
+ROOT = next(p for p in [pathlib.Path.cwd(), *pathlib.Path.cwd().parents] if (p / "backtest_strat").is_dir())
 sys.path.insert(0, str(ROOT))
 
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 
-from src.derived import derive_symbol
-from src.research.market import instrument_specs, spread_snapshot
-from src.research import stats
-from src.research.bars import minute_bars, to_hourly
-from src.research.evaluate import fast_pnl, run_schedule
-from src.validation import validate_symbol
+from backtest_strat.derived import derive_symbol
+from backtest_strat.research.market import instrument_specs, spread_snapshot
+from backtest_strat.research import stats
+from backtest_strat.research.bars import minute_bars, to_hourly
+from backtest_strat.research.evaluate import fast_pnl, run_schedule
+from backtest_strat.validation import validate_symbol
 
 pd.options.display.float_format = "{:,.3f}".format
 
@@ -86,7 +86,7 @@ md("""
 Данные собираются утилитами проекта (идемпотентно). Для идей на барах достаточно **только сделок**:
 
 ```bash
-python -m src.cli --exchange okx --symbol BTC-USDT --mode backfill --start 2024-01-01 --end 2024-01-31 \\
+python -m backtest_strat.cli --exchange okx --symbol BTC-USDT --mode backfill --start 2024-01-01 --end 2024-01-31 \\
        --data-type trades --stage all
 ```
 Стадия `all` скачает, нормализует, проверит и построит бары `bars_1s`/`bars_1m`. Стакан нужен только если идея
@@ -134,7 +134,7 @@ md("""
 
 **Чек-лист «точка во времени» (отметьте каждый пункт):**
 - [ ] Признак в строке `t` использует только данные, **полностью известные** к моменту `t` (проверьте shift/rolling).
-- [ ] Внешние ряды сдвинуты на задержку публикации (`src/external/weather.py::load_daily(lag_days=1)`).
+- [ ] Внешние ряды сдвинуты на задержку публикации (`backtest_strat/external/weather.py::load_daily(lag_days=1)`).
 - [ ] Нормировки (среднее/std/квантили) считаются по скользящему окну прошлого, а не по всей выборке.
 - [ ] Цена исполнения = цена, доступная на момент решения, а не «закрытие бара, который еще идет».
 - [ ] Пропуски заполняются только вперед (`ffill`), никогда назад.
@@ -196,7 +196,7 @@ md("""
 ## 6. Исполнение через движок и чувствительность к издержкам
 
 Расписание позиций исполняется движком проекта на синтетическом стакане из минутных баров
-(`src/backtest/bar_feed.py`). Расхождение с быстрой оценкой должно быть пренебрежимо мало относительно оборота (≲ 0.1%) — это проверка, что расчет верен;
+(`backtest_strat/backtest/bar_feed.py`). Расхождение с быстрой оценкой должно быть пренебрежимо мало относительно оборота (≲ 0.1%) — это проверка, что расчет верен;
 относительная ошибка на PnL, близком к нулю, не показательна.
 """)
 

@@ -7,9 +7,9 @@ from unittest.mock import MagicMock, patch
 import pytest
 from fastapi.testclient import TestClient
 
-from src.api.app import app
-from src.api.jobs import JobRunner, JobStore
-from src.pipeline import PipelineParams, PipelineResult
+from backtest_strat.api.app import app
+from backtest_strat.api.jobs import JobRunner, JobStore
+from backtest_strat.pipeline import PipelineParams, PipelineResult
 
 
 def test_job_store_crud_and_fail_interrupted(tmp_path: Path):
@@ -75,7 +75,7 @@ def test_job_runner_execution(tmp_path: Path):
     fake_result = PipelineResult()
 
     try:
-        with patch("src.api.jobs.run_pipeline", return_value=fake_result):
+        with patch("backtest_strat.api.jobs.run_pipeline", return_value=fake_result):
             job_id = runner.submit(params)
             # Wait for thread to finish
             for _ in range(50):
@@ -97,9 +97,9 @@ def api_client(tmp_path: Path):
     raw_dir = tmp_path / "raw"
     processed_dir = tmp_path / "processed"
 
-    with patch("src.api.app.JOBS_DB", str(db_file)), \
-         patch("src.api.app.RAW_DIR", str(raw_dir)), \
-         patch("src.api.app.PROCESSED_DIR", str(processed_dir)):
+    with patch("backtest_strat.api.app.JOBS_DB", str(db_file)), \
+         patch("backtest_strat.api.app.RAW_DIR", str(raw_dir)), \
+         patch("backtest_strat.api.app.PROCESSED_DIR", str(processed_dir)):
         with TestClient(app) as client:
             yield client, raw_dir, processed_dir
 
@@ -133,7 +133,7 @@ def test_api_create_and_get_job(api_client):
         "mode": "daily",
     }
     fake_result = PipelineResult()
-    with patch("src.api.jobs.run_pipeline", return_value=fake_result):
+    with patch("backtest_strat.api.jobs.run_pipeline", return_value=fake_result):
         resp = client.post("/jobs", json=good_req, headers={"X-Client": "ui"})
         assert resp.status_code == 202
         created = resp.json()
@@ -193,7 +193,7 @@ def test_api_symbols_invalid_type(api_client):
 
 def test_api_schedule_endpoints(api_client, monkeypatch):
     client, _, _ = api_client
-    from src import scheduler
+    from backtest_strat import scheduler
 
     cfg_data = dict(scheduler.DEFAULTS)
 
@@ -205,9 +205,9 @@ def test_api_schedule_endpoints(api_client, monkeypatch):
         cfg_data.clear()
         cfg_data.update(cfg)
 
-    monkeypatch.setattr("src.scheduler.load_config", fake_load)
-    monkeypatch.setattr("src.scheduler.save_config", fake_save)
-    monkeypatch.setattr("src.scheduler.status", lambda: {
+    monkeypatch.setattr("backtest_strat.scheduler.load_config", fake_load)
+    monkeypatch.setattr("backtest_strat.scheduler.save_config", fake_save)
+    monkeypatch.setattr("backtest_strat.scheduler.status", lambda: {
         "enabled": cfg_data["enabled"],
         "cron_installed": True,
         "cron_line": scheduler.cron_line(cfg_data["time"]),
@@ -254,11 +254,11 @@ def test_api_logs_endpoints(api_client, tmp_path, monkeypatch):
     today = "2024-01-01"
     log_file = log_dir / f"pipeline-{today}.log"
     log_file.write_text(
-        "2024-01-01 12:00:00,000 [INFO] [api] src.api.app: Server startup\n"
-        "2024-01-01 12:01:00,000 [WARNING] [ui] src.api.app: UI warning with keyword\n"
+        "2024-01-01 12:00:00,000 [INFO] [api] backtest_strat.api.app: Server startup\n"
+        "2024-01-01 12:01:00,000 [WARNING] [ui] backtest_strat.api.app: UI warning with keyword\n"
     )
 
-    with patch("src.api.app.read_logs") as mock_read:
+    with patch("backtest_strat.api.app.read_logs") as mock_read:
         mock_read.return_value = [{"level": "WARNING", "source": "ui", "message": "UI warning"}]
         resp = client.get("/logs?days=1&level=WARNING&source=ui&q=keyword&limit=10")
         assert resp.status_code == 200
@@ -310,8 +310,8 @@ def test_api_validation_endpoint(api_client):
 
 def test_job_runner_progress_and_crash(tmp_path, monkeypatch):
     from datetime import date
-    from src.api.jobs import JobRunner, JobStore
-    from src.pipeline import PipelineParams
+    from backtest_strat.api.jobs import JobRunner, JobStore
+    from backtest_strat.pipeline import PipelineParams
 
     db_path = tmp_path / "jobs.sqlite"
     store = JobStore(str(db_path))
@@ -324,7 +324,7 @@ def test_job_runner_progress_and_crash(tmp_path, monkeypatch):
             on_progress(0.5, "Step 2")
         raise RuntimeError("simulated pipeline crash")
 
-    monkeypatch.setattr("src.api.jobs.run_pipeline", crashing_pipeline)
+    monkeypatch.setattr("backtest_strat.api.jobs.run_pipeline", crashing_pipeline)
 
     params = PipelineParams(exchange="okx", symbols=["BTC-USDT"], start=date(2024, 1, 1), end=date(2024, 1, 1))
     job_id = store.create(params)

@@ -4,9 +4,9 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import pytest
 
-from src.normalizers import get_normalizer
-from src.normalizers.base import StepStatus, sort_events
-from src.normalizers.schema import BOOK_SNAPSHOT, BOOK_UPDATE, BUY, EVENT_SCHEMA, SELL, TRADE
+from backtest_strat.normalizers import get_normalizer
+from backtest_strat.normalizers.base import StepStatus, sort_events
+from backtest_strat.normalizers.schema import BOOK_SNAPSHOT, BOOK_UPDATE, BUY, EVENT_SCHEMA, SELL, TRADE
 from tests.normalizers.test_okx import make_orderbook_targz, make_trades_zip
 
 

@@ -1,5 +1,5 @@
 import pyarrow as pa
-from src.normalizers.schema import (
+from backtest_strat.normalizers.schema import (
     BOOK_SNAPSHOT,
     BOOK_UPDATE,
     BUY,

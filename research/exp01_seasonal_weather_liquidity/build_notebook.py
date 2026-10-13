@@ -17,7 +17,7 @@ md("""
 
 code("""
 import json, sys, pathlib
-ROOT = next(p for p in [pathlib.Path.cwd(), *pathlib.Path.cwd().parents] if (p / "src").is_dir())
+ROOT = next(p for p in [pathlib.Path.cwd(), *pathlib.Path.cwd().parents] if (p / "backtest_strat").is_dir())
 sys.path.insert(0, str(ROOT)); sys.path.insert(0, str(ROOT / "research/exp01_seasonal_weather_liquidity"))
 import numpy as np, pandas as pd, matplotlib.pyplot as plt
 pd.options.display.float_format = "{:,.2f}".format

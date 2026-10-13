@@ -2,10 +2,10 @@ from typing import List
 import pyarrow as pa
 import pytest
 
-from src.backtest.engine import BacktestEngine
-from src.backtest.strategy import Context, Strategy
-from src.backtest.types import BUY, SELL, InstrumentSpec
-from src.normalizers.schema import BOOK_SNAPSHOT, BOOK_UPDATE, EVENT_SCHEMA, TRADE
+from backtest_strat.backtest.engine import BacktestEngine
+from backtest_strat.backtest.strategy import Context, Strategy
+from backtest_strat.backtest.types import BUY, SELL, InstrumentSpec
+from backtest_strat.normalizers.schema import BOOK_SNAPSHOT, BOOK_UPDATE, EVENT_SCHEMA, TRADE
 
 
 def make_record_batch(rows: List[dict]) -> pa.RecordBatch:

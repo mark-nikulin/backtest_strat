@@ -2,9 +2,9 @@ from datetime import date
 from unittest.mock import MagicMock, patch
 import pytest
 
-from src.fetchers.base import BackfillReport, DownloadResult, DownloadStatus
-from src.normalizers.base import NormalizeReport, StepResult, StepStatus
-from src.pipeline import PipelineParams, PipelineResult, run_pipeline, run_pipeline_async
+from backtest_strat.fetchers.base import BackfillReport, DownloadResult, DownloadStatus
+from backtest_strat.normalizers.base import NormalizeReport, StepResult, StepStatus
+from backtest_strat.pipeline import PipelineParams, PipelineResult, run_pipeline, run_pipeline_async
 
 
 def test_pipeline_params_validation():
@@ -126,8 +126,8 @@ async def test_run_pipeline_stages_and_progress():
     def progress_cb(frac: float, text: str):
         progress_history.append((frac, text))
 
-    with patch("src.pipeline.get_fetcher", return_value=mock_fetcher) as pf, \
-         patch("src.pipeline.get_normalizer", return_value=mock_normalizer) as pn:
+    with patch("backtest_strat.pipeline.get_fetcher", return_value=mock_fetcher) as pf, \
+         patch("backtest_strat.pipeline.get_normalizer", return_value=mock_normalizer) as pn:
         result = await run_pipeline_async(params, on_progress=progress_cb)
 
     assert result.ok
@@ -170,7 +170,7 @@ def test_run_pipeline_reports_failure():
 
     mock_fetcher.download_historical_range = fake_download
 
-    with patch("src.pipeline.get_fetcher", return_value=mock_fetcher):
+    with patch("backtest_strat.pipeline.get_fetcher", return_value=mock_fetcher):
         result = run_pipeline(params)
 
     assert not result.ok
@@ -191,7 +191,7 @@ def test_run_pipeline_stage_validate_only():
         stage="validate",
     )
 
-    from src.validation import ValidationSummary
+    from backtest_strat.validation import ValidationSummary
 
     fake_summary = ValidationSummary(
         symbol="BTC-USDT",
@@ -208,9 +208,9 @@ def test_run_pipeline_stage_validate_only():
         missing_days=[],
     )
 
-    with patch("src.pipeline.get_fetcher") as mock_fetcher, \
-         patch("src.pipeline.get_normalizer") as mock_normalizer, \
-         patch("src.pipeline.validate_symbol", return_value=fake_summary) as mock_val:
+    with patch("backtest_strat.pipeline.get_fetcher") as mock_fetcher, \
+         patch("backtest_strat.pipeline.get_normalizer") as mock_normalizer, \
+         patch("backtest_strat.pipeline.validate_symbol", return_value=fake_summary) as mock_val:
         result = run_pipeline(params)
 
     assert not mock_fetcher.called
@@ -235,7 +235,7 @@ async def test_run_pipeline_stage_all_runs_validation_after_normalize():
         stage="all",
     )
 
-    from src.validation import ValidationSummary
+    from backtest_strat.validation import ValidationSummary
 
     mock_fetcher = MagicMock()
     mock_ingest_report = BackfillReport("BTC-USDT", "trades", [
@@ -259,7 +259,7 @@ async def test_run_pipeline_stage_all_runs_validation_after_normalize():
         missing_days=[],
     )
 
-    from src.derived import DeriveReport, DeriveStep
+    from backtest_strat.derived import DeriveReport, DeriveStep
     mock_derive = DeriveReport("BTC-USDT", [DeriveStep("2024-01-01", "processed")])
 
     call_order = []
@@ -278,10 +278,10 @@ async def test_run_pipeline_stage_all_runs_validation_after_normalize():
         call_order.append("derive")
         return mock_derive
 
-    with patch("src.pipeline.get_fetcher", return_value=mock_fetcher), \
-         patch("src.pipeline.get_normalizer", return_value=mock_normalizer), \
-         patch("src.pipeline.validate_symbol", side_effect=val_run), \
-         patch("src.pipeline.derive_symbol", side_effect=derive_run):
+    with patch("backtest_strat.pipeline.get_fetcher", return_value=mock_fetcher), \
+         patch("backtest_strat.pipeline.get_normalizer", return_value=mock_normalizer), \
+         patch("backtest_strat.pipeline.validate_symbol", side_effect=val_run), \
+         patch("backtest_strat.pipeline.derive_symbol", side_effect=derive_run):
         result = await run_pipeline_async(params)
 
     assert result.ok is True
@@ -302,13 +302,13 @@ def test_run_pipeline_stage_derive_only():
         stage="derive",
     )
 
-    from src.derived import DeriveReport, DeriveStep
+    from backtest_strat.derived import DeriveReport, DeriveStep
     fake_derive = DeriveReport("BTC-USDT", [DeriveStep("2024-01-01", "processed")])
 
-    with patch("src.pipeline.get_fetcher") as mock_fetcher, \
-         patch("src.pipeline.get_normalizer") as mock_norm, \
-         patch("src.pipeline.validate_symbol") as mock_val, \
-         patch("src.pipeline.derive_symbol", return_value=fake_derive) as mock_der:
+    with patch("backtest_strat.pipeline.get_fetcher") as mock_fetcher, \
+         patch("backtest_strat.pipeline.get_normalizer") as mock_norm, \
+         patch("backtest_strat.pipeline.validate_symbol") as mock_val, \
+         patch("backtest_strat.pipeline.derive_symbol", return_value=fake_derive) as mock_der:
         result = run_pipeline(params)
 
     assert not mock_fetcher.called
@@ -333,10 +333,10 @@ def test_run_pipeline_derive_failure_marks_result_failed():
         stage="derive",
     )
 
-    from src.derived import DeriveReport, DeriveStep
+    from backtest_strat.derived import DeriveReport, DeriveStep
     fake_derive = DeriveReport("BTC-USDT", [DeriveStep("2024-01-01", "failed", error="ParquetWriteError")])
 
-    with patch("src.pipeline.derive_symbol", return_value=fake_derive):
+    with patch("backtest_strat.pipeline.derive_symbol", return_value=fake_derive):
         result = run_pipeline(params)
 
     assert result.ok is False
@@ -355,7 +355,7 @@ def test_run_pipeline_validation_failure_marks_result_failed():
         stage="validate",
     )
 
-    from src.validation import ValidationSummary
+    from backtest_strat.validation import ValidationSummary
 
     fake_summary = ValidationSummary(
         symbol="BTC-USDT",
@@ -371,7 +371,7 @@ def test_run_pipeline_validation_failure_marks_result_failed():
         missing_days=["2024-01-02"],
     )
 
-    with patch("src.pipeline.validate_symbol", return_value=fake_summary):
+    with patch("backtest_strat.pipeline.validate_symbol", return_value=fake_summary):
         result = run_pipeline(params)
 
     assert result.ok is False

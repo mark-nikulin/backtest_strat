@@ -1,13 +1,13 @@
 # Документация командной строки (CLI)
 
-Консольная утилита [`src.cli`](file:///Users/kyle/main/py_files/backtest_strat/src/cli.py) предназначена для ручного запуска и автоматизации (cron) сбора и нормализации рыночных данных.
+Консольная утилита [`backtest_strat.cli`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/cli.py) предназначена для ручного запуска и автоматизации (cron) сбора и нормализации рыночных данных.
 
 ---
 
 ## 1. Параметры командной строки
 
 ```bash
-python -m src.cli --exchange <EXCHANGE> --symbol <SYMBOL...> [ОПЦИИ]
+python -m backtest_strat.cli --exchange <EXCHANGE> --symbol <SYMBOL...> [ОПЦИИ]
 ```
 
 | Флаг | Тип / Значения | По умолчанию | Описание |
@@ -43,7 +43,7 @@ python -m src.cli --exchange <EXCHANGE> --symbol <SYMBOL...> [ОПЦИИ]
 ### 3.1. Исторический Backfill за месяц
 Скачивание и нормализация сделок и стакана по паре `BTC-USDT` за январь 2024 года с параллелизмом в 8 потоков:
 ```bash
-python -m src.cli \
+python -m backtest_strat.cli \
   --exchange okx \
   --symbol BTC-USDT \
   --mode backfill \
@@ -55,7 +55,7 @@ python -m src.cli \
 ### 3.2. Backfill только сделок для нескольких инструментов
 Скачивание только сырых сделок без запуска этапа нормализации:
 ```bash
-python -m src.cli \
+python -m backtest_strat.cli \
   --exchange okx \
   --symbol BTC-USDT ETH-USDT SOL-USDT \
   --mode backfill \
@@ -68,7 +68,7 @@ python -m src.cli \
 ### 3.3. Принудительная пересборка нормализации (Force)
 Пересобрать уже скачанные сырые данные в Parquet:
 ```bash
-python -m src.cli \
+python -m backtest_strat.cli \
   --exchange okx \
   --symbol BTC-USDT \
   --mode backfill \
@@ -81,7 +81,7 @@ python -m src.cli \
 ### 3.4. Daily режим (вчерашний полный день UTC)
 Загрузка и сборка данных за вчерашний день (UTC):
 ```bash
-python -m src.cli \
+python -m backtest_strat.cli \
   --exchange okx \
   --symbol BTC-USDT BTC-USDT-SWAP \
   --mode daily \
@@ -96,5 +96,5 @@ python -m src.cli \
 
 ```cron
 # Запуск daily-сбора каждый день в 03:15 UTC
-15 3 * * * cd /path/to/backtest_strat && /path/to/backtest_strat/.venv/bin/python -m src.cli --exchange okx --symbol BTC-USDT --mode daily --quiet >> /path/to/backtest_strat/data/logs/cron.log 2>&1
+15 3 * * * cd /path/to/backtest_strat && /path/to/backtest_strat/.venv/bin/python -m backtest_strat.cli --exchange okx --symbol BTC-USDT --mode daily --quiet >> /path/to/backtest_strat/data/logs/cron.log 2>&1
 ```

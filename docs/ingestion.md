@@ -1,6 +1,6 @@
 # Архитектура модуля Ingestion (Сбор сырых данных)
 
-Модуль `src/fetchers` отвечает за отказоустойчивую загрузку исторических архивов рыночных данных (сделки, снимки и обновления стакана) с криптовалютных бирж без использования приватных API-ключей.
+Модуль `backtest_strat/fetchers` отвечает за отказоустойчивую загрузку исторических архивов рыночных данных (сделки, снимки и обновления стакана) с криптовалютных бирж без использования приватных API-ключей.
 
 ---
 
@@ -8,13 +8,13 @@
 
 ### 1.1. Базовые абстракции
 Архитектура построена на паттерне «Шаблонный метод» (Template Method):
-* [`BaseExchangeFetcher`](file:///Users/kyle/main/py_files/backtest_strat/src/fetchers/base.py) инкапсулирует всю общую инфраструктурную логику:
+* [`BaseExchangeFetcher`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/fetchers/base.py) инкапсулирует всю общую инфраструктурную логику:
   * Проверка идемпотентности (пропуск уже скачанных файлов).
   * Атомарная запись на диск через временные `.part` файлы.
   * Механизм повторов (Exponential Backoff + full jitter, обработка `Retry-After`).
   * Параллельный Backfill с ограничением конкурентности (`asyncio.Semaphore`).
   * Сбор отчета `BackfillReport` с изоляцией ошибок (падение одного дня не ломает весь диапазон).
-* Наследники (например, [`OkxFetcher`](file:///Users/kyle/main/py_files/backtest_strat/src/fetchers/okx.py)) определяют только специфику конкретной биржи:
+* Наследники (например, [`OkxFetcher`](file:///Users/kyle/main/py_files/backtest_strat/backtest_strat/fetchers/okx.py)) определяют только специфику конкретной биржи:
   * Список поддерживаемых типов данных (`supported_data_types`).
   * Схему формирования имени архива (`archive_filename`).
   * Список кандидатных URL-адресов в порядке приоритета (`candidate_urls`).
@@ -73,7 +73,7 @@ data/raw/
 
 ```python
 from datetime import date
-from src.fetchers import get_fetcher, DownloadStatus
+from backtest_strat.fetchers import get_fetcher, DownloadStatus
 
 # 1. Получение экземпляра загрузчика
 fetcher = get_fetcher("okx", base_dir="data/raw")
@@ -110,11 +110,11 @@ spreads = await fetcher.spread_snapshot(inst_type="SPOT")    # срез bid-ask 
 
 Чтобы подключить новую площадку (например, `bybit`, `binance`), достаточно выполнить 3 шага:
 
-### Шаг 1: Создать класс-наследник в `src/fetchers/<exchange>.py`
+### Шаг 1: Создать класс-наследник в `backtest_strat/fetchers/<exchange>.py`
 ```python
 from datetime import date
 from typing import List
-from src.fetchers.base import BaseExchangeFetcher
+from backtest_strat.fetchers.base import BaseExchangeFetcher
 
 class BybitFetcher(BaseExchangeFetcher):
     supported_data_types = ("trades", "orderbook")
@@ -132,9 +132,9 @@ class BybitFetcher(BaseExchangeFetcher):
         return [f"https://public.bybit.com/trading/{symbol}/{filename}"]
 ```
 
-### Шаг 2: Зарегистрировать загрузчик в реестре `src/fetchers/__init__.py`
+### Шаг 2: Зарегистрировать загрузчик в реестре `backtest_strat/fetchers/__init__.py`
 ```python
-from src.fetchers.bybit import BybitFetcher
+from backtest_strat.fetchers.bybit import BybitFetcher
 
 FETCHERS = {
     "okx": OkxFetcher,
