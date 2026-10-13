@@ -9,6 +9,9 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "network: marks tests as requiring real network access (deselect with '-m \"not network\"')"
     )
+    config.addinivalue_line(
+        "markers", "slow: marks tests as slow (benchmark / reference tests)"
+    )
 
 
 class MockHttpServer:

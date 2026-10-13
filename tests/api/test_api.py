@@ -140,6 +140,16 @@ def test_api_create_and_get_job(api_client):
         job_id = created["id"]
         assert created["status"] in ("queued", "running", "done")
 
+        # 2b. Request with stage='derive': 202
+        derive_req = {
+            "exchange": "okx",
+            "symbols": ["BTC-USDT"],
+            "mode": "daily",
+            "stage": "derive",
+        }
+        resp_der = client.post("/jobs", json=derive_req)
+        assert resp_der.status_code == 202
+
         # 3. GET /jobs/{job_id}
         resp_get = client.get(f"/jobs/{job_id}")
         assert resp_get.status_code == 200

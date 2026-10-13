@@ -259,6 +259,9 @@ async def test_run_pipeline_stage_all_runs_validation_after_normalize():
         missing_days=[],
     )
 
+    from src.derived import DeriveReport, DeriveStep
+    mock_derive = DeriveReport("BTC-USDT", [DeriveStep("2024-01-01", "processed")])
+
     call_order = []
 
     mock_fetcher.download_historical_range = MagicMock(side_effect=lambda *a, **k: fake_download(*a, **k))
@@ -271,16 +274,75 @@ async def test_run_pipeline_stage_all_runs_validation_after_normalize():
         call_order.append("validate")
         return mock_summary
 
+    def derive_run(*args, **kwargs):
+        call_order.append("derive")
+        return mock_derive
+
     with patch("src.pipeline.get_fetcher", return_value=mock_fetcher), \
          patch("src.pipeline.get_normalizer", return_value=mock_normalizer), \
-         patch("src.pipeline.validate_symbol", side_effect=val_run):
+         patch("src.pipeline.validate_symbol", side_effect=val_run), \
+         patch("src.pipeline.derive_symbol", side_effect=derive_run):
         result = await run_pipeline_async(params)
 
     assert result.ok is True
     assert len(result.ingest) == 1
     assert len(result.normalize) == 1
     assert len(result.validate) == 1
-    assert call_order == ["normalize", "validate"]
+    assert len(result.derive) == 1
+    assert call_order == ["normalize", "validate", "derive"]
+
+
+def test_run_pipeline_stage_derive_only():
+    params = PipelineParams(
+        exchange="okx",
+        symbols=["BTC-USDT"],
+        mode="backfill",
+        start=date(2024, 1, 1),
+        end=date(2024, 1, 1),
+        stage="derive",
+    )
+
+    from src.derived import DeriveReport, DeriveStep
+    fake_derive = DeriveReport("BTC-USDT", [DeriveStep("2024-01-01", "processed")])
+
+    with patch("src.pipeline.get_fetcher") as mock_fetcher, \
+         patch("src.pipeline.get_normalizer") as mock_norm, \
+         patch("src.pipeline.validate_symbol") as mock_val, \
+         patch("src.pipeline.derive_symbol", return_value=fake_derive) as mock_der:
+        result = run_pipeline(params)
+
+    assert not mock_fetcher.called
+    assert not mock_norm.called
+    assert not mock_val.called
+    assert mock_der.called
+    assert result.ok is True
+    assert len(result.ingest) == 0
+    assert len(result.normalize) == 0
+    assert len(result.validate) == 0
+    assert len(result.derive) == 1
+    assert result.derive[0].symbol == "BTC-USDT"
+
+
+def test_run_pipeline_derive_failure_marks_result_failed():
+    params = PipelineParams(
+        exchange="okx",
+        symbols=["BTC-USDT"],
+        mode="backfill",
+        start=date(2024, 1, 1),
+        end=date(2024, 1, 1),
+        stage="derive",
+    )
+
+    from src.derived import DeriveReport, DeriveStep
+    fake_derive = DeriveReport("BTC-USDT", [DeriveStep("2024-01-01", "failed", error="ParquetWriteError")])
+
+    with patch("src.pipeline.derive_symbol", return_value=fake_derive):
+        result = run_pipeline(params)
+
+    assert result.ok is False
+    d = result.to_dict()
+    assert d["ok"] is False
+    assert any(x.get("day") == "2024-01-01" and "ParquetWriteError" in x.get("error", "") for x in d["failed"])
 
 
 def test_run_pipeline_validation_failure_marks_result_failed():

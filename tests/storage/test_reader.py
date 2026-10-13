@@ -104,3 +104,83 @@ def test_load_events_success_and_empty(tmp_path: Path):
     )
     assert empty_cols.num_rows == 0
     assert empty_cols.schema.names == ["price"]
+
+
+def test_derived_files_and_invalid_kind(tmp_path: Path):
+    from src.storage.reader import derived_files, load_derived
+    import pytest
+
+    # 1. Invalid kind raises ValueError
+    with pytest.raises(ValueError, match="kind должен быть одним из"):
+        derived_files("unknown_kind", "BTC-USDT", date(2024, 1, 1), date(2024, 1, 2), processed_dir=str(tmp_path))
+
+    with pytest.raises(ValueError, match="kind должен быть одним из"):
+        load_derived("unknown_kind", "BTC-USDT", date(2024, 1, 1), date(2024, 1, 2), processed_dir=str(tmp_path))
+
+
+def test_load_derived_multi_days_and_missing_day(tmp_path: Path):
+    from src.derived.build import BAR_SCHEMA
+    from src.storage.reader import derived_files, load_derived
+
+    # Create synthetic bars for day 1 and day 3 (day 2 missing)
+    d1 = date(2024, 1, 1)
+    d3 = date(2024, 1, 3)
+
+    def _write_bars(d: date, rows_count: int):
+        dest = tmp_path / "okx" / "BTC-USDT" / "bars_1s" / f"year={d.year}" / f"month={d.month:02d}" / f"{d.isoformat()}.parquet"
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        ts_ns = [int(datetime(d.year, d.month, d.day, 12, 0, i, tzinfo=timezone.utc).timestamp() * 1_000_000_000) for i in range(rows_count)]
+        table = pa.table(
+            {
+                "ts": pa.array(ts_ns, pa.int64()).cast(BAR_SCHEMA.field("ts").type),
+                "open": pa.array([100.0] * rows_count, pa.float64()),
+                "high": pa.array([105.0] * rows_count, pa.float64()),
+                "low": pa.array([99.0] * rows_count, pa.float64()),
+                "close": pa.array([102.0] * rows_count, pa.float64()),
+                "volume": pa.array([10.0] * rows_count, pa.float64()),
+                "vwap": pa.array([101.0] * rows_count, pa.float64()),
+                "buy_volume": pa.array([6.0] * rows_count, pa.float64()),
+                "sell_volume": pa.array([4.0] * rows_count, pa.float64()),
+                "imbalance": pa.array([0.2] * rows_count, pa.float64()),
+                "trades": pa.array([5] * rows_count, pa.int32()),
+                "mid_close": pa.array([101.0] * rows_count, pa.float64()),
+                "spread_close": pa.array([2.0] * rows_count, pa.float64()),
+            },
+            schema=BAR_SCHEMA,
+        )
+        pq.write_table(table, dest)
+        return dest
+
+    f1 = _write_bars(d1, 3)
+    f3 = _write_bars(d3, 2)
+
+    # derived_files ignores missing day 2 and returns existing files
+    files = derived_files("bars_1s", "BTC-USDT", d1, d3, processed_dir=str(tmp_path))
+    assert files == [f1, f3]
+
+    # load_derived concatenates chronologically across missing day
+    table = load_derived("bars_1s", "BTC-USDT", d1, d3, processed_dir=str(tmp_path))
+    assert table.num_rows == 5
+    assert table.schema == BAR_SCHEMA
+
+    # With selected columns
+    table_cols = load_derived("bars_1s", "BTC-USDT", d1, d3, processed_dir=str(tmp_path), columns=["open", "close"])
+    assert table_cols.num_rows == 5
+    assert table_cols.schema.names == ["open", "close"]
+
+
+def test_load_derived_empty_and_columns(tmp_path: Path):
+    from src.derived.build import BAR_SCHEMA
+    from src.storage.reader import load_derived
+
+    # Empty range returns empty table with full schema
+    empty_table = load_derived("bars_1s", "BTC-USDT", date(2024, 2, 1), date(2024, 2, 2), processed_dir=str(tmp_path))
+    assert empty_table.num_rows == 0
+    assert empty_table.schema == BAR_SCHEMA
+
+    # Empty range with column selection returns empty table with selected schema
+    empty_cols = load_derived(
+        "bars_1s", "BTC-USDT", date(2024, 2, 1), date(2024, 2, 2), processed_dir=str(tmp_path), columns=["ts", "vwap"]
+    )
+    assert empty_cols.num_rows == 0
+    assert empty_cols.schema.names == ["ts", "vwap"]
