@@ -17,6 +17,7 @@
 | [**`okx_historical_data.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/okx_historical_data.md) | Техническая спецификация публичных архивов биржи OKX: эндпоинты CDN, форматы сделок (ZIP/CSV) и стакана L2 400lv (TAR.GZ/NDJSON). |
 | [**`operations.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/operations.md) | Эксплуатация и мониторинг: ночной планировщик `src.scheduler`, схема двух выключателей, централизованные суточные логи в `logs/`. |
 | [**`research_workflow.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/research_workflow.md) | Исследовательский воркфлоу «идея → векторный тест → бэктест», правила Point-in-Time, ограничения `bar_feed`, векторная оценка (`fast_pnl`). |
+| [**`testing.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/testing.md) | Стратегия тестирования, запуск быстрых/медленных тестов и сводка покрытия кодовой базы (96% coverage). |
 | [**`web_ui.md`**](file:///Users/kyle/main/py_files/backtest_strat/docs/web_ui.md) | Веб-интерфейс и HTTP API: бэкенд на FastAPI с пулом задач в SQLite, 5 вкладок Streamlit-дашборда, спецификация REST API. |
 
 ---

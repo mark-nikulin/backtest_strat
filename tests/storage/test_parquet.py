@@ -170,3 +170,18 @@ def test_manifest_remove_outputs(tmp_path: Path):
     assert not out1.exists()
     assert not out2.exists()
     assert manifest.get(key) is None
+
+
+def test_writer_abort_with_close_error(tmp_path: Path):
+    from unittest.mock import MagicMock
+    root = tmp_path / "events"
+    table = _make_sample_table([datetime(2024, 1, 15, 10, 0, tzinfo=timezone.utc)])
+    writer = PartitionedParquetWriter(root, "day.parquet", EVENT_SCHEMA)
+    writer.write(table)
+    for w in writer._writers.values():
+        w.close = MagicMock(side_effect=RuntimeError("close failed"))
+    writer.abort()
+    for w in writer._writers.values():
+        w.close = MagicMock()  # avoid exception in __del__
+
+

@@ -182,3 +182,34 @@ def test_corrupt_raw_file_produces_failed_step(tmp_path: Path):
     # Valid orderbook still got processed
     processed = report.by_status(StepStatus.PROCESSED)
     assert any(p.name == f"orderbook:{valid_book.name}" for p in processed)
+
+
+def test_build_events_unnormalized_inputs_and_exception(tmp_path: Path, monkeypatch):
+    raw_dir = tmp_path / "raw"
+    processed_dir = tmp_path / "processed"
+    norm = get_normalizer("okx", raw_dir=str(raw_dir), processed_dir=str(processed_dir))
+
+    d = date(2024, 1, 1)
+    book_file = raw_dir / "okx" / "BTC-USDT" / "orderbook" / f"BTC-USDT-L2orderbook-400lv-{d.isoformat()}.tar.gz"
+    make_orderbook_targz(book_file, [])
+    trade_file_d = raw_dir / "okx" / "BTC-USDT" / "trades" / f"BTC-USDT-trades-{d.isoformat()}.zip"
+    make_trades_zip(trade_file_d, [])
+    trade_file_d1 = raw_dir / "okx" / "BTC-USDT" / "trades" / f"BTC-USDT-trades-2024-01-02.zip"
+    make_trades_zip(trade_file_d1, [])
+
+    # 1. Raw files exist, but build_events called before normalize_file -> INCOMPLETE ("входы еще не нормализованы")
+    res = norm.build_events("BTC-USDT", d)
+    assert res.status == StepStatus.INCOMPLETE
+    assert "входы еще не нормализованы" in res.error
+
+    # Normalize files
+    norm.normalize_file("BTC-USDT", "orderbook", book_file)
+    norm.normalize_file("BTC-USDT", "trades", trade_file_d)
+    norm.normalize_file("BTC-USDT", "trades", trade_file_d1)
+
+    # 2. Exception inside build_events -> FAILED
+    monkeypatch.setattr("pyarrow.dataset.dataset", lambda *args, **kwargs: (_ for _ in ()).throw(RuntimeError("disk read error")))
+    res_err = norm.build_events("BTC-USDT", d, force=True)
+    assert res_err.status == StepStatus.FAILED
+    assert "disk read error" in res_err.error
+

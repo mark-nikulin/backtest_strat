@@ -148,3 +148,33 @@ async def test_download_to_file_unique_part_names_during_transfer(tmp_path: Path
         assert len(hex_part) == 8
         int(hex_part, 16)  # valid hex
     assert list(dest.parent.glob("*.part")) == []
+
+
+@pytest.mark.asyncio
+async def test_download_to_file_incomplete_content_length_raises_retryable(tmp_path: Path):
+    from unittest.mock import AsyncMock, MagicMock
+    dest = tmp_path / "incomplete.zip"
+
+    mock_resp = MagicMock()
+    mock_resp.status = 200
+    mock_resp.headers = {}
+    mock_resp.content_length = 100
+
+    async def fake_iter_chunked(_):
+        yield b"short"
+
+    mock_resp.content.iter_chunked = fake_iter_chunked
+
+    mock_cm = AsyncMock()
+    mock_cm.__aenter__.return_value = mock_resp
+    mock_cm.__aexit__.return_value = None
+
+    session = MagicMock()
+    session.get.return_value = mock_cm
+
+    with pytest.raises(RetryableError, match="Неполная загрузка"):
+        await download_to_file(session, "http://example.com/incomplete.zip", dest)
+
+    assert not dest.exists()
+
+

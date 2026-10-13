@@ -306,3 +306,33 @@ def test_api_validation_endpoint(api_client):
     assert data["days"][0]["day"] == "2024-01-01"
     assert data["missing_days"] == ["2024-01-02"]
     assert data["not_validated"] == ["2024-01-03"]
+
+
+def test_job_runner_progress_and_crash(tmp_path, monkeypatch):
+    from datetime import date
+    from src.api.jobs import JobRunner, JobStore
+    from src.pipeline import PipelineParams
+
+    db_path = tmp_path / "jobs.sqlite"
+    store = JobStore(str(db_path))
+    runner = JobRunner(store, max_workers=1)
+
+    # Simulated pipeline crash with progress callback
+    def crashing_pipeline(params, on_progress=None):
+        if on_progress:
+            on_progress(0.1, "Step 1")
+            on_progress(0.5, "Step 2")
+        raise RuntimeError("simulated pipeline crash")
+
+    monkeypatch.setattr("src.api.jobs.run_pipeline", crashing_pipeline)
+
+    params = PipelineParams(exchange="okx", symbols=["BTC-USDT"], start=date(2024, 1, 1), end=date(2024, 1, 1))
+    job_id = store.create(params)
+    runner._run(job_id, params)
+
+    job = store.get(job_id)
+    assert job["status"] == "failed"
+    assert "simulated pipeline crash" in job["message"]
+    assert job["progress"] == pytest.approx(0.5)
+
+

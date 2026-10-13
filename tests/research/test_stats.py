@@ -128,3 +128,79 @@ def test_benjamini_hochberg():
 
     # For smallest p=0.001 (rank 1 out of 4), q should be 0.001 * 4 / 1 = 0.004
     assert q["b"] == pytest.approx(0.004)
+
+
+def test_sharpe_hourly():
+    from src.research.stats import sharpe_hourly
+
+    # Less than 24 hours -> nan
+    short = pd.Series([10.0] * 10)
+    assert np.isnan(sharpe_hourly(short, 10000.0))
+
+    # Zero std -> nan
+    const = pd.Series([10.0] * 48)
+    assert np.isnan(sharpe_hourly(const, 10000.0))
+
+    # Non-zero variance
+    rng = np.random.default_rng(42)
+    pnl = pd.Series(rng.normal(5.0, 10.0, size=100))
+    sh = sharpe_hourly(pnl, 10000.0)
+    assert np.isfinite(sh)
+    assert sh > 0
+
+
+def test_edge_ttest():
+    from src.research.stats import edge_ttest
+
+    # < 48 valid observations -> nan
+    res_short = edge_ttest(np.ones(20), np.ones(20), np.ones(20, dtype=bool))
+    assert np.isnan(res_short["edge_bps"])
+
+    # Valid run: 50 days (1200 hours)
+    rng = np.random.default_rng(42)
+    n = 1200
+    ret = rng.normal(0.001, 0.005, size=n)
+    signal = np.sign(ret)
+    valid = np.ones(n, dtype=bool)
+
+    res = edge_ttest(signal, ret, valid)
+    assert res["edge_bps"] > 0
+    assert res["t"] > 0
+    assert res["p"] < 0.05
+    assert res["n_days"] == 50
+
+    # Also test large J >= 400 branch
+    n_large = 450 * 24
+    ret_large = rng.normal(0.0, 0.005, size=n_large)
+    res_large = edge_ttest(np.ones(n_large), ret_large, np.ones(n_large, dtype=bool))
+    assert res_large["n_days"] == 450
+
+
+def test_interaction_regression():
+    from src.research.stats import interaction_regression
+
+    # < 200 rows -> nan
+    df_short = pd.DataFrame({
+        "ret": [0.001] * 50,
+        "seasonal_sig": [1.0] * 50,
+        "weather_z": [0.5] * 50,
+        "rel_liq": [1.2] * 50,
+    })
+    res_short = interaction_regression(df_short)
+    assert np.isnan(res_short["b_seasonal"])
+    assert res_short["n"] == 50
+
+    # >= 200 rows
+    idx = pd.date_range("2024-01-01", periods=300, freq="1h")
+    rng = np.random.default_rng(42)
+    df = pd.DataFrame({
+        "ret": rng.normal(0.001, 0.01, size=300),
+        "seasonal_sig": rng.choice([-1.0, 1.0], size=300),
+        "weather_z": rng.normal(0.0, 1.0, size=300),
+        "rel_liq": rng.uniform(0.5, 2.0, size=300),
+    }, index=idx)
+    res = interaction_regression(df)
+    assert np.isfinite(res["b_seasonal"])
+    assert np.isfinite(res["t_seasonal"])
+    assert res["n"] == 300
+

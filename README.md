@@ -122,6 +122,7 @@ backtest_strat/
 │   ├── okx_historical_data.md  # Спецификация данных OKX
 │   ├── operations.md           # Эксплуатация, планировщик и логирование
 │   ├── research_workflow.md    # Исследовательский воркфлоу и Point-in-Time
+│   ├── testing.md              # Стратегия тестирования и отчет о покрытии
 │   └── web_ui.md               # Web UI и спецификация HTTP API
 ├── logs/                       # Централизованные суточные логи (pipeline-YYYY-MM-DD.log)
 ├── research/                   # Исследовательские проекты и эксперименты
