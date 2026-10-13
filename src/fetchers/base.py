@@ -95,6 +95,15 @@ class BaseExchangeFetcher(abc.ABC):
         """Список тикеров биржи для выпадающих списков UI. По умолчанию не поддерживается."""
         return []
 
+    async def spread_snapshot(self, inst_type: str = "SPOT") -> Dict[str, float]:
+        """{symbol: текущий относительный спред в б.п.} по лучшим bid/ask. Прокси издержек, НЕ история."""
+        return {}
+
+    async def instrument_specs(self, inst_type: str = "SPOT") -> Dict[str, dict]:
+        """{symbol: {"tick_size": float, "lot_size": float, "min_size": float, "multiplier": float}}.
+        Нужны бэктесту (шаг цены, лот). По умолчанию не поддерживается."""
+        return {}
+
     # --- Общая логика ---
 
     def get_target_path(self, symbol: str, target_date: date, data_type: str) -> Path:

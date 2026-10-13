@@ -1,0 +1,17 @@
+symbol,days_validated,days_ok,days_warn,days_fail,missing_days,warn_no_initial_book,warn_book_gap,warn_price_spike
+BTC-USDT,181,179,2,0,0,1.0,1.0,1.0
+ETH-USDT,181,180,1,0,0,,,1.0
+SOL-USDT,181,178,3,0,0,,,3.0
+XRP-USDT,181,180,1,0,0,,,1.0
+DOGE-USDT,181,176,5,0,0,,,5.0
+LTC-USDT,181,179,2,0,0,,,2.0
+ADA-USDT,181,180,1,0,0,,,1.0
+AVAX-USDT,181,180,1,0,0,,,1.0
+LINK-USDT,181,181,0,0,0,,,
+DOT-USDT,181,180,1,0,0,,,1.0
+ATOM-USDT,181,181,0,0,0,,,
+ETC-USDT,181,179,2,0,0,,,2.0
+BCH-USDT,181,180,1,0,0,,,1.0
+UNI-USDT,181,180,1,0,0,,,1.0
+FIL-USDT,181,181,0,0,0,,,
+TRX-USDT,181,181,0,0,0,,,

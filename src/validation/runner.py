@@ -13,7 +13,10 @@ from typing import Callable, List, Optional
 
 from src.utils.dates import date_range
 from src.utils.locks import file_lock
+from src.derived.trade_bars import covered_utc_days, trade_source_days, trade_source_files
+from src.storage.layout import events_files  # noqa: F401  (реэкспорт для api)
 from src.validation.day import FAIL, OK, WARN, DayReport, Thresholds, validate_events_file
+from src.validation.trades import validate_trade_day
 
 logger = logging.getLogger(__name__)
 
@@ -27,11 +30,6 @@ def _fingerprint(path: Path) -> dict:
 
 def validation_dir(processed_dir: str, exchange: str, symbol: str) -> Path:
     return Path(processed_dir) / exchange / symbol / "validation"
-
-
-def events_files(processed_dir: str, exchange: str, symbol: str) -> dict:
-    root = Path(processed_dir) / exchange / symbol / "events"
-    return {date.fromisoformat(p.stem): p for p in root.glob("year=*/month=*/*.parquet")} if root.exists() else {}
 
 
 @dataclass
@@ -107,13 +105,53 @@ def validate_symbol(
             if on_progress:
                 on_progress(i, len(days))
 
+    # Дни без стакана, но с покрытием сделок: проверки только по сделкам (src/validation/trades.py)
+    trade_only = [
+        d for d in covered_utc_days(trade_source_days(processed_dir, exchange, symbol))
+        if d not in files and (start is None or d >= start) and (end is None or d <= end)
+    ]
+    if trade_only:
+        with file_lock(out_dir / ".lock"):
+            for day in trade_only:
+                report_path = out_dir / f"{day.isoformat()}.json"
+                srcs = [p for d in (day, day + timedelta(days=1)) for p in trade_source_files(processed_dir, exchange, symbol, d)]
+                fp = {"trade_files": {p.name: p.stat().st_size for p in srcs}, "version": REPORT_VERSION}
+                cached = None
+                if not force and report_path.exists():
+                    try:
+                        data = json.loads(report_path.read_text())
+                        if data.get("fingerprint") == fp:
+                            cached = data["report"]
+                    except (json.JSONDecodeError, KeyError):
+                        pass
+                if cached is not None:
+                    summary.days.append({**cached, "from_cache": True})
+                    continue
+                try:
+                    report = validate_trade_day(processed_dir, exchange, symbol, day).to_dict()
+                except Exception as e:
+                    logger.error(f"Валидация сделок {symbol} {day} упала: {e!r}")
+                    report = DayReport(
+                        day=day.isoformat(), status=FAIL, events=0, book_messages=0, trades=0, snapshots=0,
+                        first_ts=None, last_ts=None, stats={},
+                        checks=[{"name": "validator_error", "status": FAIL, "detail": repr(e), "value": 0, "examples": []}],
+                    ).to_dict()
+                else:
+                    out_dir.mkdir(parents=True, exist_ok=True)
+                    tmp = report_path.with_name(report_path.name + ".tmp")
+                    tmp.write_text(json.dumps({"fingerprint": fp, "report": report}, ensure_ascii=False, indent=1))
+                    os.replace(tmp, report_path)
+                summary.days.append({**report, "from_cache": False})
+        summary.days.sort(key=lambda d: d["day"])
+
     # Пропуски: любой день внутри диапазона собранных дней без файла событий.
     # Последний собранный день не считаем пропуском-хвостом — его края определяются самими данными.
-    if len(files) >= 2:
-        lo, hi = min(files), max(files)
+    have = set(files) | set(covered_utc_days(trade_source_days(processed_dir, exchange, symbol)))
+    if len(have) >= 2:
+        lo, hi = min(have), max(have)
         scope_lo, scope_hi = max(lo, start or lo), min(hi, end or hi)
         if scope_lo <= scope_hi:
-            summary.missing_days = [d.isoformat() for d in date_range(scope_lo, scope_hi) if d not in files]
+            summary.missing_days = [d.isoformat() for d in date_range(scope_lo, scope_hi) if d not in have]
     for m in summary.missing_days:
         logger.warning(f"Нет событий за {symbol} {m} внутри собранного диапазона")
     logger.info(f"Валидация завершена. {summary.summary()}")

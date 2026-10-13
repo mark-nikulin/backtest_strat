@@ -13,3 +13,7 @@ TODO.md
 orckest.md
 data_preproc.md
 logs/
+
+# исследования: перегенерируемые артефакты
+research/**/results/features.parquet
+research/**/results/progress.json

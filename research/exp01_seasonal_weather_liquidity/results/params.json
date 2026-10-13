@@ -1,0 +1,22 @@
+{
+  "exchange": "okx",
+  "processed_dir": "data/processed",
+  "start": "2024-01-01",
+  "end": "2024-06-29",
+  "split": "2024-04-01",
+  "seasonal_window_days": 28,
+  "seasonal_t_threshold": 1.0,
+  "weather_window_days": 30,
+  "weather_z_threshold": 1.0,
+  "weather_lag_days": 1,
+  "liquidity_window_days": 30,
+  "liquidity_threshold": 1.0,
+  "notional": 1000.0,
+  "taker_fee_bps": 10.0,
+  "taker_fee_low_bps": 2.0,
+  "spread_half_min_bps": 0.005,
+  "spread_half_max_bps": 15.0,
+  "placebo_draws": 500,
+  "placebo_min_shift_days": 7,
+  "seed": 20240101
+}
