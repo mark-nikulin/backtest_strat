@@ -139,6 +139,7 @@ with tab_coverage:
 with tab_quality:
     q_symbol = st.text_input("Тикер", symbols[0] if symbols else "BTC-USDT", key="q_symbol")
     val = api("GET", f"/validation/{exchange}/{q_symbol}")
+    val = {"days": [], "missing_days": [], "not_validated": [], **(val if isinstance(val, dict) else {})}
     icon = {"OK": "🟢", "WARN": "🟡", "FAIL": "🔴"}
     if not val["days"] and not val["not_validated"]:
         st.info("Данных нет. Запустите задачу со стадией «Только проверить» или «Скачать + нормализовать + проверить».")
